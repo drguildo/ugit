@@ -11,6 +11,6 @@ fn main() {
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
-        ugit::init();
+        ugit::data::init();
     }
 }
