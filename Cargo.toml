@@ -1,0 +1,8 @@
+[package]
+name = "ugit"
+version = "0.1.0"
+authors = ["Simon Morgan <sjm@sjm.io>"]
+edition = "2018"
+
+[dependencies]
+clap = "2"
