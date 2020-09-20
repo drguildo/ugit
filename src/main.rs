@@ -2,7 +2,7 @@ use clap::App;
 
 mod ugit;
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
         .author(clap::crate_authors!())
@@ -11,6 +11,8 @@ fn main() {
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
-        ugit::data::init();
+        ugit::data::init()?;
     }
+
+    Ok(())
 }
