@@ -1,5 +1,7 @@
 use clap::App;
 
+mod ugit;
+
 fn main() {
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
@@ -9,10 +11,6 @@ fn main() {
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
-        init();
+        ugit::init();
     }
-}
-
-fn init() {
-    println!("Hello, World!")
 }
