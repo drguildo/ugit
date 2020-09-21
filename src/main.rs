@@ -25,7 +25,9 @@ fn main() {
         let filename = matches.value_of("filename").unwrap();
         let contents = std::fs::read(filename).expect("Failed to read file contents");
         let object_hash: String = ugit::data::hash_object(&contents);
-        println!("{}", object_hash);
+        std::io::stdout()
+            .write_all(object_hash.as_bytes())
+            .expect("Failed to output object ID");
         std::process::exit(0);
     }
 
