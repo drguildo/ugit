@@ -36,7 +36,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
         let oid = matches.value_of("oid").unwrap();
-        let contents: Vec<u8> = ugit::data::cat_file(oid);
+        let contents: Vec<u8> = ugit::data::get_object(oid);
         std::io::stdout()
             .write_all(&contents)
             .expect("Failed to output file data");

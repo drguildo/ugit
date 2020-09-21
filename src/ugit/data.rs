@@ -29,7 +29,7 @@ pub fn hash_object(data: &Vec<u8>) -> String {
     oid
 }
 
-pub fn cat_file(oid: &str) -> Vec<u8> {
+pub fn get_object(oid: &str) -> Vec<u8> {
     let path: PathBuf = [GIT_DIR, "objects", oid].iter().collect();
     println!("{:?}", path);
     let contents = fs::read(path).expect("Failed to read file data");
