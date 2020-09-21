@@ -28,6 +28,9 @@ fn main() {
         std::io::stdout()
             .write_all(object_hash.as_bytes())
             .expect("Failed to output object ID");
+        std::io::stdout()
+            .write(b"\n")
+            .expect("Failed to write newline");
         std::process::exit(0);
     }
 
