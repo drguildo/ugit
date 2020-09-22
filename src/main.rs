@@ -14,6 +14,7 @@ fn main() {
             SubCommand::with_name("hash-object").arg(Arg::with_name("filename").required(true)),
         )
         .subcommand(SubCommand::with_name("cat-file").arg(Arg::with_name("oid").required(true)))
+        .subcommand(SubCommand::with_name("write-tree"))
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
@@ -41,5 +42,10 @@ fn main() {
             .write_all(&contents)
             .expect("Failed to output file data");
         std::process::exit(0);
+    }
+
+    if let Some(_matches) = matches.subcommand_matches("write-tree") {
+        let cwd = std::env::current_dir().expect("Failed to get current working directory");
+        ugit::base::write_tree(cwd.as_path());
     }
 }
