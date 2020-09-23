@@ -11,7 +11,9 @@ pub fn write_tree(path: &Path) {
         if path.is_dir() {
             write_tree(&path);
         } else {
-            println!("{:?}", path);
+            let contents = std::fs::read(path).expect("Failed to read file contents");
+            let oid = super::data::hash_object(&contents, "blob");
+            println!("{}", oid);
         }
     }
 }
