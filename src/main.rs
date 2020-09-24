@@ -25,7 +25,7 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("hash-object") {
         let filename = matches.value_of("filename").unwrap();
         let contents = std::fs::read(filename).expect("Failed to read file contents");
-        let object_hash: String = ugit::data::hash_object(&contents, "blob");
+        let object_hash = ugit::data::hash_object(&contents, "blob");
         std::io::stdout()
             .write_all(object_hash.as_bytes())
             .expect("Failed to output object ID");
@@ -37,7 +37,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
         let oid = matches.value_of("oid").unwrap();
-        let contents: Vec<u8> = ugit::data::get_object(oid, Some("blob"));
+        let contents = ugit::data::get_object(oid, Some("blob"));
         std::io::stdout()
             .write_all(&contents)
             .expect("Failed to output file data");
