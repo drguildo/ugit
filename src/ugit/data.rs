@@ -5,6 +5,7 @@ use sha1::{digest, Digest, Sha1};
 
 const GIT_DIR: &str = ".ugit";
 
+/// Create a new ugit repository.
 pub fn init() {
     let mut path = PathBuf::from(GIT_DIR);
     fs::create_dir(&path).expect("Failed to create .ugit directory");
@@ -13,6 +14,7 @@ pub fn init() {
     fs::create_dir(&path).expect("Unable to create objects directory");
 }
 
+/// Add a new object to the object store and return it's OID.
 pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
     // TODO(sjm): Add a hash_object overload that only takes the data and just calls this function
     // with type "blob"?
@@ -41,6 +43,7 @@ pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
     oid
 }
 
+/// Retrieve the object with the specified OID from the object store.
 pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     let path: PathBuf = [GIT_DIR, "objects", oid].iter().collect();
     let contents = fs::read(path).expect("Failed to read file data");

@@ -1,5 +1,6 @@
 use std::{fs, path::Component, path::Path};
 
+/// Traverse a directory hierarchy, adding any files or directories to the object store.
 pub fn write_tree(path: &Path) {
     if is_ignored(path) {
         return;
@@ -18,6 +19,7 @@ pub fn write_tree(path: &Path) {
     }
 }
 
+/// Whether or not the specified path should not be added to the object store.
 fn is_ignored(path: &Path) -> bool {
     path.components()
         .any(|c| c == Component::Normal(".ugit".as_ref()))
