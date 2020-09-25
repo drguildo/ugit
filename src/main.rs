@@ -37,7 +37,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
         let oid = matches.value_of("oid").unwrap();
-        let contents = ugit::data::get_object(oid, Some("blob"));
+        let contents = ugit::data::get_object(oid, None);
         std::io::stdout()
             .write_all(&contents)
             .expect("Failed to output file data");
