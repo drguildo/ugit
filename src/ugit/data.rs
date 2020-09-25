@@ -1,7 +1,7 @@
 use std::{fmt::Write as _, fs};
 use std::{io::Write as _, path::PathBuf};
 
-use sha1::{digest, Digest, Sha1};
+use sha1::{Digest, Sha1};
 
 const GIT_DIR: &str = ".ugit";
 
@@ -22,7 +22,7 @@ pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
     // Hex encode the SHA1 of the data to get the OID.
     let mut hasher = Sha1::new();
     hasher.update(data);
-    let result: digest::generic_array::GenericArray<u8, _> = hasher.finalize();
+    let result = hasher.finalize();
     let mut oid = String::new();
     for byte in result {
         write!(&mut oid, "{:x}", byte).expect("Unable to construct object filename");
@@ -51,7 +51,7 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     // Find the index of the null byte that separates the object type from the data.
     let index = contents
         .iter()
-        .position(|x| *x == 0)
+        .position(|b| *b == 0)
         .expect("Failed to find null byte object type separator");
     // Split the data on the null byte.
     let (object_type, data) = contents.split_at(index);

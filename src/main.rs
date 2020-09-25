@@ -31,7 +31,7 @@ fn main() {
             .expect("Failed to output object ID");
         std::io::stdout()
             .write(b"\n")
-            .expect("Failed to write newline");
+            .expect("Failed to output newline");
         std::process::exit(0);
     }
 
