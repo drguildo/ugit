@@ -54,7 +54,8 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
         .position(|b| *b == 0)
         .expect("Failed to find null byte object type separator");
     // Split the data on the null byte.
-    let (object_type, data) = contents.split_at(index);
+    let object_type = &contents[0..index];
+    let data = &contents[index + 1..];
 
     if let Some(expected_type) = expected_type {
         // Check whether the object type stored in the data is the expected type.
