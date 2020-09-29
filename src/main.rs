@@ -1,4 +1,8 @@
-use std::io::Write;
+use std::{
+    env, fs,
+    io::{self, Write},
+    process,
+};
 
 use clap::{App, Arg, SubCommand};
 
@@ -22,40 +26,38 @@ fn main() {
 
     if let Some(_matches) = matches.subcommand_matches("init") {
         ugit::data::init();
-        std::process::exit(0);
+        process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("hash-object") {
         let filename = matches.value_of("filename").unwrap();
-        let contents = std::fs::read(filename).expect("Failed to read file contents");
+        let contents = fs::read(filename).expect("Failed to read file contents");
         let object_hash = ugit::data::hash_object(&contents, "blob");
-        std::io::stdout()
+        io::stdout()
             .write_all(object_hash.as_bytes())
             .expect("Failed to output object ID");
-        std::io::stdout()
-            .write(b"\n")
-            .expect("Failed to output newline");
-        std::process::exit(0);
+        io::stdout().write(b"\n").expect("Failed to output newline");
+        process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
         let oid = matches.value_of("oid").unwrap();
         let contents = ugit::data::get_object(oid, None);
-        std::io::stdout()
+        io::stdout()
             .write_all(&contents)
             .expect("Failed to output file data");
-        std::process::exit(0);
+        process::exit(0);
     }
 
     if let Some(_matches) = matches.subcommand_matches("write-tree") {
-        let cwd = std::env::current_dir().expect("Failed to get current working directory");
+        let cwd = env::current_dir().expect("Failed to get current working directory");
         ugit::base::write_tree(cwd.as_path());
-        std::process::exit(0);
+        process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("read-tree") {
         let tree_oid = matches.value_of("tree_oid").unwrap();
         ugit::base::read_tree(tree_oid);
-        std::process::exit(0);
+        process::exit(0);
     }
 }
