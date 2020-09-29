@@ -15,6 +15,9 @@ fn main() {
         )
         .subcommand(SubCommand::with_name("cat-file").arg(Arg::with_name("oid").required(true)))
         .subcommand(SubCommand::with_name("write-tree"))
+        .subcommand(
+            SubCommand::with_name("read-tree").arg(Arg::with_name("tree_oid").required(true)),
+        )
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
@@ -47,5 +50,12 @@ fn main() {
     if let Some(_matches) = matches.subcommand_matches("write-tree") {
         let cwd = std::env::current_dir().expect("Failed to get current working directory");
         ugit::base::write_tree(cwd.as_path());
+        std::process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("read-tree") {
+        let tree_oid = matches.value_of("tree_oid").unwrap();
+        ugit::base::read_tree(tree_oid);
+        std::process::exit(0);
     }
 }
