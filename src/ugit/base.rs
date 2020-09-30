@@ -65,6 +65,8 @@ pub fn read_tree(tree_oid: &str) {
     }
 }
 
+/// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
+/// and their paths.
 fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> {
     let tree_object = super::data::get_object(oid, Some("tree"));
     let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
