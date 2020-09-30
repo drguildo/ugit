@@ -16,9 +16,6 @@ pub fn init() {
 
 /// Adds a new object to the object store and return it's OID.
 pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
-    // TODO(sjm): Add a hash_object overload that only takes the data and just calls this function
-    // with type "blob"?
-
     // Hex encode the SHA1 of the data to get the OID.
     let mut hasher = Sha1::new();
     hasher.update(data);
@@ -62,6 +59,5 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
         assert!(expected_type.as_bytes() == object_type);
     }
 
-    // NOTE(sjm): Does this copy to a new Vec? If so, is it possible to do this without copying?
     data.to_vec()
 }
