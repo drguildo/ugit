@@ -4,7 +4,7 @@ use std::{
     path::{self, Path},
 };
 
-/// Traverse a directory hierarchy, adding any files or directories to the object store.
+/// Traverses a directory hierarchy, adding any files or directories to the object store.
 pub fn write_tree(path: &Path) -> Option<String> {
     if is_ignored(path) {
         return None;
@@ -46,6 +46,8 @@ pub fn write_tree(path: &Path) -> Option<String> {
     Some(oid)
 }
 
+/// Retrieves the tree with the specified OID from the object store and writes it to the current
+/// directory.
 pub fn read_tree(tree_oid: &str) {
     let tree = get_tree(tree_oid, None);
     for (oid, path) in tree {

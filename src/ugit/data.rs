@@ -14,7 +14,7 @@ pub fn init() {
     fs::create_dir(&path).expect("Unable to create objects directory");
 }
 
-/// Add a new object to the object store and return it's OID.
+/// Adds a new object to the object store and return it's OID.
 pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
     // TODO(sjm): Add a hash_object overload that only takes the data and just calls this function
     // with type "blob"?
@@ -43,7 +43,7 @@ pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
     oid
 }
 
-/// Retrieve the object with the specified OID from the object store.
+/// Retrieves the object with the specified OID from the object store.
 pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     let path: PathBuf = [GIT_DIR, "objects", oid].iter().collect();
     let contents = fs::read(path).expect("Failed to read file data");
