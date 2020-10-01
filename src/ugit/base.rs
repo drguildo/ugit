@@ -10,7 +10,7 @@ pub fn write_tree(path: &Path) -> Option<String> {
         return None;
     }
 
-    let mut entries: Vec<(&str, String, String)> = vec![];
+    let mut entries: Vec<(&str, String, ffi::OsString)> = vec![];
     for dir_entry in fs::read_dir(&path).expect("Failed to read directory") {
         let path = dir_entry.expect("Failed to read directory entry").path();
         if path.is_file() {
@@ -19,8 +19,6 @@ pub fn write_tree(path: &Path) -> Option<String> {
             let file_name = path
                 .file_name()
                 .expect("Failed to get file name for path")
-                .to_str()
-                .expect("Failed to convert OS string to string")
                 .to_owned();
             entries.push(("blob", oid, file_name));
         } else if path.is_dir() {
@@ -28,8 +26,6 @@ pub fn write_tree(path: &Path) -> Option<String> {
                 let dir_name = path
                     .file_name()
                     .expect("Failed to get directory name for path")
-                    .to_str()
-                    .expect("Failed to convert OS string to string")
                     .to_owned();
                 entries.push(("tree", oid, dir_name));
             }
@@ -38,7 +34,8 @@ pub fn write_tree(path: &Path) -> Option<String> {
 
     let mut tree = String::new();
     for (object_type, oid, path) in entries {
-        let tree_row = format!("{} {} {}\n", object_type, oid, path);
+        let path_string = path.to_str().expect("Failed to convert path to string");
+        let tree_row = format!("{} {} {}\n", object_type, oid, path_string);
         tree.push_str(tree_row.as_str());
     }
     let oid = super::data::hash_object(&tree.into_bytes(), "tree");
