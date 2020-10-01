@@ -16,14 +16,7 @@ pub fn init() {
 
 /// Adds a new object to the object store and return it's OID.
 pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
-    // Hex encode the SHA1 of the data to get the OID.
-    let mut hasher = Sha1::new();
-    hasher.update(data);
-    let result = hasher.finalize();
-    let mut oid = String::new();
-    for byte in result {
-        write!(&mut oid, "{:x}", byte).expect("Unable to construct object filename");
-    }
+    let oid = generate_oid(data);
 
     // Write the data to a file, using the OID as the filename.
     let path: PathBuf = [GIT_DIR, "objects", &oid].iter().collect();
@@ -60,4 +53,16 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     }
 
     data.to_vec()
+}
+
+/// Generates an OID from a byte vector.
+fn generate_oid(bytes: &Vec<u8>) -> String {
+    let mut hasher = Sha1::new();
+    hasher.update(bytes);
+    let result = hasher.finalize();
+    let mut oid = String::new();
+    for byte in result {
+        write!(&mut oid, "{:x}", byte).expect("Unable to construct object filename");
+    }
+    oid
 }
