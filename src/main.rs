@@ -29,6 +29,10 @@ fn main() {
         process::exit(0);
     }
 
+    // All of the subsequent subcommands need to be run within an existing ugit repository, so exit
+    // with an error if the current working directory isn't one.
+    exit_if_not_repository();
+
     if let Some(matches) = matches.subcommand_matches("hash-object") {
         let filename = matches.value_of("filename").unwrap();
         let contents = fs::read(filename).expect("Failed to read file contents");
@@ -59,5 +63,13 @@ fn main() {
         let tree_oid = matches.value_of("tree_oid").unwrap();
         ugit::base::read_tree(tree_oid);
         process::exit(0);
+    }
+}
+
+fn exit_if_not_repository() {
+    let cwd = env::current_dir().expect("Failed to get current directory");
+    if !ugit::base::is_ugit_repository(&cwd) {
+        eprintln!("Not a ugit repository.");
+        process::exit(1);
     }
 }
