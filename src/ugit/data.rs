@@ -3,11 +3,9 @@ use std::{io::Write as _, path::PathBuf};
 
 use sha1::{Digest, Sha1};
 
-const GIT_DIR: &str = ".ugit";
-
 /// Create a new ugit repository.
 pub fn init() {
-    let mut path = PathBuf::from(GIT_DIR);
+    let mut path = PathBuf::from(super::UGIT_DIR);
     fs::create_dir(&path).expect("Failed to create .ugit directory");
 
     path.push("objects");
@@ -19,7 +17,7 @@ pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
     let oid = generate_oid(data);
 
     // Write the data to a file, using the OID as the filename.
-    let path: PathBuf = [GIT_DIR, "objects", &oid].iter().collect();
+    let path: PathBuf = [super::UGIT_DIR, "objects", &oid].iter().collect();
     let mut file = fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -35,7 +33,7 @@ pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
 
 /// Retrieves the object with the specified OID from the object store.
 pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
-    let path: PathBuf = [GIT_DIR, "objects", oid].iter().collect();
+    let path: PathBuf = [super::UGIT_DIR, "objects", oid].iter().collect();
     let contents = fs::read(path).expect("Failed to read file data");
 
     // Find the index of the null byte that separates the object type from the data.
