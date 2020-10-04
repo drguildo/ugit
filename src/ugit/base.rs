@@ -102,6 +102,14 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
     result
 }
 
+/// Whether the specified path is a ugit repository. This is overly simplistic and should really
+/// check whether the .ugit directory at least contains an objects sub-directory.
+pub fn is_ugit_repository(path: &Path) -> bool {
+    let mut ugit_data_dir = path.to_owned();
+    ugit_data_dir.push(super::UGIT_DIR);
+    ugit_data_dir.is_dir()
+}
+
 /// Whether or not the specified path should not be added to the object store.
 fn is_ignored(path: &Path) -> bool {
     path.components()
