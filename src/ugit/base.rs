@@ -116,7 +116,7 @@ fn is_ignored(path: &Path) -> bool {
         .any(|c| c == Component::Normal(".ugit".as_ref()))
 }
 
-// Whether a path contains illegal components.
+/// Whether a path contains illegal components.
 fn is_illegal(path: &Path) -> bool {
     let illegal_path_components = [Component::RootDir, Component::CurDir, Component::ParentDir];
     path.components()
