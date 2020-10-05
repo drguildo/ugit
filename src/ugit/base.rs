@@ -46,6 +46,9 @@ pub fn write_tree(path: &Path) -> Option<String> {
 /// Retrieves the tree with the specified OID from the object store and writes it to the current
 /// directory.
 pub fn read_tree(tree_oid: &str) {
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    empty_directory(&current_dir);
+
     let tree = get_tree(tree_oid, None);
     for (oid, path) in tree {
         let directories = Path::new(&path)
@@ -121,4 +124,19 @@ fn is_illegal(path: &Path) -> bool {
     let illegal_path_components = [Component::RootDir, Component::CurDir, Component::ParentDir];
     path.components()
         .any(|c| illegal_path_components.contains(&c))
+}
+
+fn empty_directory(dir_path: &Path) {
+    let dir = fs::read_dir(dir_path).expect("Failed to read directory");
+    for entry in dir {
+        let path = entry.expect("Failed to read directory entry").path();
+        if path.is_dir() {
+            if !is_ignored(&path) {
+                empty_directory(&path);
+                fs::remove_dir(path).expect("Failed to remove directory");
+            }
+        } else if path.is_file() {
+            fs::remove_file(path).expect("Failed to remove file");
+        }
+    }
 }
