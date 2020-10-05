@@ -116,7 +116,7 @@ pub fn is_ugit_repository(path: &Path) -> bool {
 /// Whether or not the specified path should not be added to the object store.
 fn is_ignored(path: &Path) -> bool {
     path.components()
-        .any(|c| c == Component::Normal(".ugit".as_ref()))
+        .any(|c| c == Component::Normal(super::UGIT_DIR.as_ref()))
 }
 
 /// Whether a path contains illegal components.
