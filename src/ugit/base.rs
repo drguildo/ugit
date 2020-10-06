@@ -126,6 +126,7 @@ fn is_illegal(path: &Path) -> bool {
         .any(|c| illegal_path_components.contains(&c))
 }
 
+/// Empty the specified directory of its contents, ignoring the ugit directory.
 fn empty_directory(dir_path: &Path) {
     let dir = fs::read_dir(dir_path).expect("Failed to read directory");
     for entry in dir {
