@@ -13,14 +13,23 @@ fn main() {
         .about(clap::crate_description!())
         .author(clap::crate_authors!())
         .version(clap::crate_version!())
-        .subcommand(SubCommand::with_name("init"))
+        .subcommand(SubCommand::with_name("init").about("Create a new ugit repository"))
         .subcommand(
-            SubCommand::with_name("hash-object").arg(Arg::with_name("filename").required(true)),
+            SubCommand::with_name("hash-object")
+                .about("Add the specified file to the object store and print its OID")
+                .arg(Arg::with_name("filename").required(true)),
         )
-        .subcommand(SubCommand::with_name("cat-file").arg(Arg::with_name("oid").required(true)))
-        .subcommand(SubCommand::with_name("write-tree"))
         .subcommand(
-            SubCommand::with_name("read-tree").arg(Arg::with_name("tree_oid").required(true)),
+            SubCommand::with_name("cat-file")
+                .about("Print the contents of the file with the specified OID")
+                .arg(Arg::with_name("oid").required(true)),
+        )
+        .subcommand(
+            SubCommand::with_name("write-tree")
+                .about("Write the current directory to the object store"),
+        )
+        .subcommand(
+            SubCommand::with_name("read-tree").about("Replace the contents of the current directory with the tree with the specified OID").arg(Arg::with_name("tree_oid").required(true)),
         )
         .get_matches();
 
