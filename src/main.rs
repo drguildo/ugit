@@ -31,6 +31,7 @@ fn main() {
         .subcommand(
             SubCommand::with_name("read-tree").about("Replace the contents of the current directory with the tree with the specified OID").arg(Arg::with_name("tree_oid").required(true)),
         )
+        .subcommand(SubCommand::with_name("commit").arg(Arg::with_name("message").short("m").long("message").takes_value(true).required(true)))
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
@@ -71,6 +72,12 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("read-tree") {
         let tree_oid = matches.value_of("tree_oid").unwrap();
         ugit::base::read_tree(tree_oid);
+        process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("commit") {
+        let message = matches.value_of("message").unwrap();
+        ugit::base::commit(message);
         process::exit(0);
     }
 }

@@ -1,8 +1,21 @@
 use std::{
-    ffi, fs,
+    env, ffi, fs,
     path::Component,
     path::{self, Path},
 };
+
+pub fn commit(message: &str) -> Option<String> {
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let tree_oid = write_tree(&current_dir).expect("Failed to write tree");
+
+    let mut commit = String::new();
+    commit.push_str(format!("tree {}\n", tree_oid).as_str());
+    commit.push_str("\n");
+    commit.push_str(message);
+
+    let commit_oid = super::data::hash_object(&commit.as_bytes().to_vec(), "commit");
+    Some(commit_oid)
+}
 
 /// Traverses a directory hierarchy, adding any files or directories to the object store.
 pub fn write_tree(path: &Path) -> Option<String> {
@@ -46,7 +59,7 @@ pub fn write_tree(path: &Path) -> Option<String> {
 /// Retrieves the tree with the specified OID from the object store and writes it to the current
 /// directory.
 pub fn read_tree(tree_oid: &str) {
-    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let current_dir = env::current_dir().expect("Failed to get current directory");
     empty_directory(&current_dir);
 
     let tree = get_tree(tree_oid, None);
