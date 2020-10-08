@@ -32,6 +32,7 @@ fn main() {
             SubCommand::with_name("read-tree").about("Replace the contents of the current directory with the tree with the specified OID").arg(Arg::with_name("tree_oid").required(true)),
         )
         .subcommand(SubCommand::with_name("commit").arg(Arg::with_name("message").short("m").long("message").takes_value(true).required(true)))
+        .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
