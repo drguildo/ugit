@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 clap = "2"
-sha-1 = "0.9.1"
+sha-1 = "0.9"
