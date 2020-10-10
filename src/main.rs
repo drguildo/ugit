@@ -15,6 +15,7 @@ fn main() {
     const ABOUT_WRITE_TREE: &str = "Write the current directory to the object store";
     const ABOUT_READ_TREE: &str =
         "Replace the contents of the current directory with the tree with the specified OID";
+    const ABOUT_COMMIT: &str = "Commit the current directory";
 
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
@@ -38,13 +39,15 @@ fn main() {
                 .arg(Arg::with_name("tree_oid").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("commit").arg(
-                Arg::with_name("message")
-                    .short("m")
-                    .long("message")
-                    .takes_value(true)
-                    .required(true),
-            ),
+            SubCommand::with_name("commit")
+                .arg(
+                    Arg::with_name("message")
+                        .short("m")
+                        .long("message")
+                        .takes_value(true)
+                        .required(true),
+                )
+                .about(ABOUT_COMMIT),
         )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
