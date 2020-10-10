@@ -9,33 +9,43 @@ use clap::{App, Arg, SubCommand};
 mod ugit;
 
 fn main() {
+    const ABOUT_INIT: &str = "Create a new ugit repository";
+    const ABOUT_HASH_OBJECT: &str = "Add the specified file to the object store and print its OID";
+    const ABOUT_CAT_FILE: &str = "Print the contents of the file with the specified OID";
+    const ABOUT_WRITE_TREE: &str = "Write the current directory to the object store";
+    const ABOUT_READ_TREE: &str =
+        "Replace the contents of the current directory with the tree with the specified OID";
+
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
         .author(clap::crate_authors!())
         .version(clap::crate_version!())
-        .subcommand(SubCommand::with_name("init").about("Create a new ugit repository"))
+        .subcommand(SubCommand::with_name("init").about(ABOUT_INIT))
         .subcommand(
             SubCommand::with_name("hash-object")
-                .about("Add the specified file to the object store and print its OID")
+                .about(ABOUT_HASH_OBJECT)
                 .arg(Arg::with_name("filename").required(true)),
         )
         .subcommand(
             SubCommand::with_name("cat-file")
-                .about("Print the contents of the file with the specified OID")
+                .about(ABOUT_CAT_FILE)
                 .arg(Arg::with_name("oid").required(true)),
         )
-        .subcommand(
-            SubCommand::with_name("write-tree")
-                .about("Write the current directory to the object store"),
-        )
+        .subcommand(SubCommand::with_name("write-tree").about(ABOUT_WRITE_TREE))
         .subcommand(
             SubCommand::with_name("read-tree")
-                .about("Replace the contents of the current directory with the tree with the specified OID")
+                .about(ABOUT_READ_TREE)
                 .arg(Arg::with_name("tree_oid").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("commit")
-                .arg(Arg::with_name("message").short("m").long("message").takes_value(true).required(true)))
+            SubCommand::with_name("commit").arg(
+                Arg::with_name("message")
+                    .short("m")
+                    .long("message")
+                    .takes_value(true)
+                    .required(true),
+            ),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
