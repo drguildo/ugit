@@ -13,7 +13,7 @@ pub fn init() {
 }
 
 /// Adds a new object to the object store and return it's OID.
-pub fn hash_object(data: &Vec<u8>, object_type: &str) -> String {
+pub fn hash_object(data: &[u8], object_type: &str) -> String {
     let oid = generate_oid(data);
 
     // Write the data to a file, using the OID as the filename.
@@ -54,7 +54,7 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 }
 
 /// Generates an OID from a byte vector.
-fn generate_oid(bytes: &Vec<u8>) -> String {
+fn generate_oid(bytes: &[u8]) -> String {
     let mut hasher = Sha1::new();
     hasher.update(bytes);
     let result = hasher.finalize();
