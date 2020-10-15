@@ -53,6 +53,12 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     data.to_vec()
 }
 
+/// Records the OID of the last commit.
+pub fn set_head(oid: &str) {
+    let path = get_object_path("HEAD");
+    fs::write(path, oid).expect("Failed to update HEAD");
+}
+
 /// Generates an OID from a byte vector.
 fn generate_oid(bytes: &[u8]) -> String {
     let mut hasher = Sha1::new();

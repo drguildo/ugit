@@ -14,6 +14,7 @@ pub fn commit(message: &str) -> Option<String> {
     commit.push_str(message);
 
     let commit_oid = super::data::hash_object(&commit.as_bytes().to_vec(), "commit");
+    super::data::set_head(&commit_oid);
     Some(commit_oid)
 }
 
