@@ -17,7 +17,7 @@ pub fn hash_object(data: &[u8], object_type: &str) -> String {
     let oid = generate_oid(data);
 
     // Write the data to a file, using the OID as the filename.
-    let path: PathBuf = [super::UGIT_DIR, "objects", &oid].iter().collect();
+    let path: PathBuf = get_object_path(&oid);
     let mut file = fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -33,7 +33,7 @@ pub fn hash_object(data: &[u8], object_type: &str) -> String {
 
 /// Retrieves the object with the specified OID from the object store.
 pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
-    let path: PathBuf = [super::UGIT_DIR, "objects", oid].iter().collect();
+    let path: PathBuf = get_object_path(oid);
     let contents = fs::read(path).expect("Failed to read file data");
 
     // Find the index of the null byte that separates the object type from the data.
@@ -63,4 +63,13 @@ fn generate_oid(bytes: &[u8]) -> String {
         write!(&mut oid, "{:x}", byte).expect("Unable to construct object filename");
     }
     oid
+}
+
+/// Return the path to an object in the object database.
+fn get_object_path(oid: &str) -> PathBuf {
+    let mut path = PathBuf::new();
+    path.push(super::UGIT_DIR);
+    path.push("objects");
+    path.push(oid);
+    path
 }
