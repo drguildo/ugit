@@ -55,13 +55,15 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 
 /// Records the OID of the last commit.
 pub fn set_head(oid: &str) {
-    let path = get_object_path("HEAD");
+    let mut path = PathBuf::from(super::UGIT_DIR);
+    path.push("HEAD");
     fs::write(path, oid).expect("Failed to update HEAD");
 }
 
 /// Retrieves the OID of the last commit.
 pub fn get_head() -> Option<String> {
-    let path = get_object_path("HEAD");
+    let mut path = PathBuf::from(super::UGIT_DIR);
+    path.push("HEAD");
     if path.exists() {
         let data = fs::read(path).expect("Failed to read HEAD");
         Some(String::from_utf8(data).expect("Failed to convert HEAD data to OID"))
