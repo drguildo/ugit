@@ -59,6 +59,17 @@ pub fn set_head(oid: &str) {
     fs::write(path, oid).expect("Failed to update HEAD");
 }
 
+/// Retrieves the OID of the last commit.
+pub fn get_head() -> Option<String> {
+    let path = get_object_path("HEAD");
+    if path.exists() {
+        let data = fs::read(path).expect("Failed to read HEAD");
+        Some(String::from_utf8(data).expect("Failed to convert HEAD data to OID"))
+    } else {
+        None
+    }
+}
+
 /// Generates an OID from a byte vector.
 fn generate_oid(bytes: &[u8]) -> String {
     let mut hasher = Sha1::new();

@@ -10,6 +10,9 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
+    if let Some(head_oid) = super::data::get_head() {
+        commit.push_str(format!("parent {}\n", head_oid).as_str());
+    }
     commit.push_str("\n");
     commit.push_str(message);
 
