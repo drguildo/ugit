@@ -4,6 +4,8 @@ use std::{
     path::{self, Path},
 };
 
+/// Store the contents of the current directory to the object database, creates a commit object and
+/// updates the HEAD.
 pub fn commit(message: &str) -> Option<String> {
     let current_dir = std::env::current_dir().expect("Failed to get current directory");
     let tree_oid = write_tree(&current_dir).expect("Failed to write tree");
