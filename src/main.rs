@@ -49,6 +49,7 @@ fn main() {
                 )
                 .about(ABOUT_COMMIT),
         )
+        .subcommand(SubCommand::with_name("log"))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -97,6 +98,21 @@ fn main() {
         let message = matches.value_of("message").unwrap();
         ugit::base::commit(message);
         process::exit(0);
+    }
+
+    if matches.subcommand_matches("log").is_some() {
+        log();
+    }
+}
+
+fn log() {
+    let mut oid_opt = ugit::data::get_head();
+    while oid_opt.is_some() {
+        let oid = oid_opt.unwrap();
+        let commit = ugit::base::get_commit(&oid);
+        println!("commit {}", oid);
+        println!("{}\n", commit.message);
+        oid_opt = commit.parent;
     }
 }
 
