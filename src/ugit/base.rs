@@ -26,43 +26,34 @@ pub fn commit(message: &str) -> Option<String> {
 pub fn get_commit(oid: &str) -> super::Commit {
     let commit_data = super::data::get_object(oid, Some("commit"));
     let commit = String::from_utf8(commit_data).expect("Commit contains invalid data");
-    let commit_lines: Vec<&str> = commit.lines().collect();
+    let mut commit_lines = commit.lines();
 
-    // A commit should contain a minimum of 3 lines, i.e. the tree OID, a blank line, and the commit
-    // message.
-    if commit_lines.len() < 3 {
-        panic!("Commit contains too few lines")
+    let mut tree_oid: Option<&str> = None;
+    let mut parent_oid: Option<&str> = None;
+
+    for line in commit_lines.by_ref().take_while(|l| *l != "") {
+        let mut split_line = line.split_whitespace();
+        let key = split_line
+            .next()
+            .expect("Failed to retrieve key from commit header");
+        let oid = split_line.next();
+        match key {
+            "tree" => tree_oid = oid,
+            "parent" => parent_oid = oid,
+            _ => panic!("Unrecognised commit header type"),
+        }
     }
 
-    let mut tree_line = commit_lines[0].split_whitespace();
-    assert_eq!(tree_line.next(), Some("tree"));
-    let tree_oid = tree_line
-        .next()
-        .expect("Failed to retrieve tree OID from commit");
+    let message: String = commit_lines.collect();
 
-    if commit_lines[1] == "" {
-        // The commit doesn't have a parent i.e. it's the first commit.
-        let message = commit_lines[2..].join("\n");
-
+    if let Some(tree_oid) = tree_oid {
         super::Commit {
             tree: tree_oid.to_string(),
-            parent: None,
-            message: message.to_string(),
+            parent: parent_oid.map(ToOwned::to_owned),
+            message,
         }
     } else {
-        // The commit has a parent.
-        let mut parent_line = commit_lines[1].split_whitespace();
-        assert_eq!(parent_line.next(), Some("parent"));
-        let parent_oid = parent_line
-            .next()
-            .expect("Failed to retrieve parent OID from commit");
-        let message = commit_lines[3..].join("\n");
-
-        super::Commit {
-            tree: tree_oid.to_string(),
-            parent: Some(parent_oid.to_string()),
-            message: message.to_string(),
-        }
+        panic!("Commit did not contain tree header")
     }
 }
 
