@@ -40,7 +40,16 @@ pub fn get_commit(oid: &str) -> super::Commit {
         .next()
         .expect("Failed to retrieve tree OID from commit");
 
-    if commit_lines[1] != "" {
+    if commit_lines[1] == "" {
+        // The commit doesn't have a parent i.e. it's the first commit.
+        let message = commit_lines[2..].join("\n");
+
+        super::Commit {
+            tree: tree_oid.to_string(),
+            parent: None,
+            message: message.to_string(),
+        }
+    } else {
         // The commit has a parent.
         let mut parent_line = commit_lines[1].split_whitespace();
         assert_eq!(parent_line.next(), Some("parent"));
@@ -52,15 +61,6 @@ pub fn get_commit(oid: &str) -> super::Commit {
         super::Commit {
             tree: tree_oid.to_string(),
             parent: Some(parent_oid.to_string()),
-            message: message.to_string(),
-        }
-    } else {
-        // The commit doesn't have a parent i.e. it's the first commit.
-        let message = commit_lines[2..].join("\n");
-
-        super::Commit {
-            tree: tree_oid.to_string(),
-            parent: None,
             message: message.to_string(),
         }
     }
