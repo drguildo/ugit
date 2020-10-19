@@ -49,7 +49,9 @@ fn main() {
                 )
                 .about(ABOUT_COMMIT),
         )
-        .subcommand(SubCommand::with_name("log"))
+        .subcommand(
+            SubCommand::with_name("log").arg(Arg::with_name("commit_oid").takes_value(true)),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -100,13 +102,22 @@ fn main() {
         process::exit(0);
     }
 
-    if matches.subcommand_matches("log").is_some() {
-        log();
+    if let Some(matches) = matches.subcommand_matches("log") {
+        if let Some(commit_oid) = matches.value_of("commit_oid") {
+            log(commit_oid);
+        } else {
+            let head_oid = ugit::data::get_head();
+            if head_oid.is_none() {
+                eprintln!("No commit OID specified and no HEAD found");
+                process::exit(1);
+            }
+            log(head_oid.unwrap().as_str());
+        };
     }
 }
 
-fn log() {
-    let mut oid_opt = ugit::data::get_head();
+fn log(oid: &str) {
+    let mut oid_opt = Some(oid.to_string());
     while oid_opt.is_some() {
         let oid = oid_opt.unwrap();
         let commit = ugit::base::get_commit(&oid);
