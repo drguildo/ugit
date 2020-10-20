@@ -116,6 +116,8 @@ fn main() {
     }
 }
 
+/// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
+/// same for the parent commit, if it exists.
 fn log(oid: &str) {
     let mut oid_opt = Some(oid.to_string());
     while oid_opt.is_some() {
