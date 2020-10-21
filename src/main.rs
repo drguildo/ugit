@@ -113,6 +113,7 @@ fn main() {
             }
             log(head_oid.unwrap().as_str());
         };
+        process::exit(0);
     }
 }
 
