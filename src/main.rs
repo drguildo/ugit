@@ -52,6 +52,9 @@ fn main() {
         .subcommand(
             SubCommand::with_name("log").arg(Arg::with_name("commit_oid").takes_value(true)),
         )
+        .subcommand(
+            SubCommand::with_name("checkout").arg(Arg::with_name("commit_oid").takes_value(true)),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -113,6 +116,12 @@ fn main() {
             }
             log(head_oid.unwrap().as_str());
         };
+        process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("checkout") {
+        let tree_oid = matches.value_of("commit_oid").unwrap();
+        ugit::base::checkout(tree_oid);
         process::exit(0);
     }
 }

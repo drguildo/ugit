@@ -158,6 +158,12 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
     result
 }
 
+pub fn checkout(oid: &str) {
+    let commit = get_commit(oid);
+    read_tree(&commit.tree);
+    super::data::set_head(oid)
+}
+
 /// Whether the specified path is a ugit repository. This is overly simplistic and should really
 /// check whether the .ugit directory at least contains an objects sub-directory.
 pub fn is_ugit_repository(path: &Path) -> bool {
