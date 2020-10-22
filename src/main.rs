@@ -109,7 +109,7 @@ fn main() {
         if let Some(commit_oid) = matches.value_of("commit_oid") {
             log(commit_oid);
         } else {
-            let head_oid = ugit::data::get_head();
+            let head_oid = ugit::data::get_ref("HEAD");
             if head_oid.is_none() {
                 eprintln!("No commit OID specified and no HEAD found");
                 process::exit(1);

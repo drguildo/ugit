@@ -53,20 +53,20 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     data.to_vec()
 }
 
-/// Records the OID of the last commit.
-pub fn set_head(oid: &str) {
+/// Map the specified reference to the specified OID.
+pub fn update_ref(reference: &str, oid: &str) {
     let mut path = PathBuf::from(super::UGIT_DIR);
-    path.push("HEAD");
-    fs::write(path, oid).expect("Failed to update HEAD");
+    path.push(reference);
+    fs::write(path, oid).expect("Failed to set reference");
 }
 
-/// Retrieves the OID of the last commit.
-pub fn get_head() -> Option<String> {
+/// Retrieves the OID that the specified reference is mapped to.
+pub fn get_ref(reference: &str) -> Option<String> {
     let mut path = PathBuf::from(super::UGIT_DIR);
-    path.push("HEAD");
+    path.push(reference);
     if path.exists() {
-        let data = fs::read(path).expect("Failed to read HEAD");
-        Some(String::from_utf8(data).expect("Failed to convert HEAD data to OID"))
+        let data = fs::read(path).expect("Failed to read reference");
+        Some(String::from_utf8(data).expect("Failed to convert reference data to OID"))
     } else {
         None
     }

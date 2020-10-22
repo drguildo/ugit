@@ -12,14 +12,14 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(head_oid) = super::data::get_head() {
+    if let Some(head_oid) = super::data::get_ref("HEAD") {
         commit.push_str(format!("parent {}\n", head_oid).as_str());
     }
     commit.push_str("\n");
     commit.push_str(message);
 
     let commit_oid = super::data::hash_object(&commit.as_bytes().to_vec(), "commit");
-    super::data::set_head(&commit_oid);
+    super::data::update_ref("HEAD", &commit_oid);
     Some(commit_oid)
 }
 
@@ -161,7 +161,7 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
 pub fn checkout(oid: &str) {
     let commit = get_commit(oid);
     read_tree(&commit.tree);
-    super::data::set_head(oid)
+    super::data::update_ref("HEAD", oid);
 }
 
 /// Whether the specified path is a ugit repository. This is overly simplistic and should really
