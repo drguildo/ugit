@@ -55,6 +55,11 @@ fn main() {
         .subcommand(
             SubCommand::with_name("checkout").arg(Arg::with_name("commit_oid").takes_value(true)),
         )
+        .subcommand(
+            SubCommand::with_name("tag")
+                .arg(Arg::with_name("name").required(true))
+                .arg(Arg::with_name("oid").required(true)),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -123,6 +128,12 @@ fn main() {
         let tree_oid = matches.value_of("commit_oid").unwrap();
         ugit::base::checkout(tree_oid);
         process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("tag") {
+        let name = matches.value_of("name").unwrap();
+        let oid = matches.value_of("oid").unwrap();
+        ugit::base::create_tag(name, oid);
     }
 }
 

@@ -55,9 +55,14 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 
 /// Map the specified reference to the specified OID.
 pub fn update_ref(reference: &str, oid: &str) {
+    let ref_path = std::path::Path::new(reference);
+    assert!(!ref_path.is_absolute());
+
     let mut path = PathBuf::from(super::UGIT_DIR);
     path.push(reference);
-    fs::write(path, oid).expect("Failed to set reference");
+    fs::create_dir_all(path.parent().unwrap())
+        .expect("Failed to create reference directory structure");
+    fs::write(path, oid).expect("Failed to update reference");
 }
 
 /// Retrieves the OID that the specified reference is mapped to.

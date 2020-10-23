@@ -4,6 +4,11 @@ use std::{
     path::{self, Path},
 };
 
+pub fn create_tag(name: &str, oid: &str) {
+    let ref_path = format!("refs/tags/{}", name);
+    super::data::update_ref(&ref_path, oid);
+}
+
 /// Store the contents of the current directory to the object database, creates a commit object and
 /// updates the HEAD.
 pub fn commit(message: &str) -> Option<String> {
