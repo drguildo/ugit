@@ -53,7 +53,7 @@ fn main() {
             SubCommand::with_name("log").arg(Arg::with_name("commit_oid").takes_value(true)),
         )
         .subcommand(
-            SubCommand::with_name("checkout").arg(Arg::with_name("commit_oid").takes_value(true)),
+            SubCommand::with_name("checkout").arg(Arg::with_name("commit_oid").required(true)),
         )
         .subcommand(
             SubCommand::with_name("tag")
