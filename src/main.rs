@@ -134,6 +134,7 @@ fn main() {
         let name = matches.value_of("name").unwrap();
         let oid = matches.value_of("oid").unwrap();
         ugit::base::create_tag(name, oid);
+        process::exit(0);
     }
 }
 
