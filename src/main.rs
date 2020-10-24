@@ -93,8 +93,8 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
-        let oid = matches.value_of("oid").unwrap();
-        let contents = ugit::data::get_object(oid, None);
+        let oid = ugit::base::get_oid(matches.value_of("oid").unwrap());
+        let contents = ugit::data::get_object(&oid, None);
         io::stdout()
             .write_all(&contents)
             .expect("Failed to output file data");
@@ -108,8 +108,8 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("read-tree") {
-        let tree_oid = matches.value_of("tree_oid").unwrap();
-        ugit::base::read_tree(tree_oid);
+        let tree_oid = ugit::base::get_oid(matches.value_of("tree_oid").unwrap());
+        ugit::base::read_tree(&tree_oid);
         process::exit(0);
     }
 
@@ -121,7 +121,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("log") {
         if let Some(commit_oid) = matches.value_of("commit_oid") {
-            log(commit_oid);
+            log(&ugit::base::get_oid(commit_oid));
         } else {
             let head_oid = ugit::data::get_ref("HEAD");
             if head_oid.is_none() {
@@ -134,15 +134,15 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("checkout") {
-        let tree_oid = matches.value_of("commit_oid").unwrap();
-        ugit::base::checkout(tree_oid);
+        let tree_oid = ugit::base::get_oid(matches.value_of("commit_oid").unwrap());
+        ugit::base::checkout(&tree_oid);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("tag") {
         let name = matches.value_of("name").unwrap();
-        let oid = matches.value_of("oid").unwrap();
-        ugit::base::create_tag(name, oid);
+        let oid = ugit::base::get_oid(matches.value_of("oid").unwrap());
+        ugit::base::create_tag(name, &oid);
         process::exit(0);
     }
 }

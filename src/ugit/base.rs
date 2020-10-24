@@ -4,6 +4,10 @@ use std::{
     path::{self, Path},
 };
 
+pub fn get_oid(name: &str) -> String {
+    super::data::get_ref(name).unwrap_or(name.to_owned())
+}
+
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
     super::data::update_ref(&ref_path, oid);
