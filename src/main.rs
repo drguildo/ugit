@@ -7,6 +7,7 @@ use std::{
 use clap::{App, Arg, SubCommand};
 
 mod ugit;
+use ugit::{base, data};
 
 fn main() {
     const ABOUT_INIT: &str = "Create a new ugit repository";
@@ -43,15 +44,13 @@ fn main() {
                 .arg(Arg::with_name("tree_oid").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("commit")
-                .arg(
-                    Arg::with_name("message")
-                        .short("m")
-                        .long("message")
-                        .takes_value(true)
-                        .required(true),
-                )
-                .about(ABOUT_COMMIT),
+            SubCommand::with_name("commit").about(ABOUT_COMMIT).arg(
+                Arg::with_name("message")
+                    .short("m")
+                    .long("message")
+                    .takes_value(true)
+                    .required(true),
+            ),
         )
         .subcommand(
             SubCommand::with_name("log")
@@ -73,7 +72,7 @@ fn main() {
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
-        ugit::data::init();
+        data::init();
         process::exit(0);
     }
 
@@ -84,7 +83,7 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("hash-object") {
         let filename = matches.value_of("filename").unwrap();
         let contents = fs::read(filename).expect("Failed to read file contents");
-        let object_hash = ugit::data::hash_object(&contents, "blob");
+        let object_hash = data::hash_object(&contents, "blob");
         io::stdout()
             .write_all(object_hash.as_bytes())
             .expect("Failed to output object ID");
@@ -93,8 +92,8 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
-        let oid = ugit::base::get_oid(matches.value_of("oid").unwrap());
-        let contents = ugit::data::get_object(&oid, None);
+        let oid = base::get_oid(matches.value_of("oid").unwrap());
+        let contents = data::get_object(&oid, None);
         io::stdout()
             .write_all(&contents)
             .expect("Failed to output file data");
@@ -103,27 +102,27 @@ fn main() {
 
     if let Some(_matches) = matches.subcommand_matches("write-tree") {
         let cwd = env::current_dir().expect("Failed to get current working directory");
-        ugit::base::write_tree(cwd.as_path());
+        base::write_tree(cwd.as_path());
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("read-tree") {
-        let tree_oid = ugit::base::get_oid(matches.value_of("tree_oid").unwrap());
-        ugit::base::read_tree(&tree_oid);
+        let tree_oid = base::get_oid(matches.value_of("tree_oid").unwrap());
+        base::read_tree(&tree_oid);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("commit") {
         let message = matches.value_of("message").unwrap();
-        ugit::base::commit(message);
+        base::commit(message);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("log") {
         if let Some(commit_oid) = matches.value_of("commit_oid") {
-            log(&ugit::base::get_oid(commit_oid));
+            log(&base::get_oid(commit_oid));
         } else {
-            let head_oid = ugit::data::get_ref("HEAD");
+            let head_oid = data::get_ref("HEAD");
             if head_oid.is_none() {
                 eprintln!("No commit OID specified and no HEAD found");
                 process::exit(1);
@@ -134,15 +133,15 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("checkout") {
-        let tree_oid = ugit::base::get_oid(matches.value_of("commit_oid").unwrap());
-        ugit::base::checkout(&tree_oid);
+        let tree_oid = base::get_oid(matches.value_of("commit_oid").unwrap());
+        base::checkout(&tree_oid);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("tag") {
         let name = matches.value_of("name").unwrap();
-        let oid = ugit::base::get_oid(matches.value_of("oid").unwrap());
-        ugit::base::create_tag(name, &oid);
+        let oid = base::get_oid(matches.value_of("oid").unwrap());
+        base::create_tag(name, &oid);
         process::exit(0);
     }
 }
@@ -153,7 +152,7 @@ fn log(oid: &str) {
     let mut oid_opt = Some(oid.to_string());
     while oid_opt.is_some() {
         let oid = oid_opt.unwrap();
-        let commit = ugit::base::get_commit(&oid);
+        let commit = base::get_commit(&oid);
         println!("commit {}", oid);
         println!("{}\n", commit.message);
         oid_opt = commit.parent;
@@ -162,7 +161,7 @@ fn log(oid: &str) {
 
 fn exit_if_not_repository() {
     let cwd = env::current_dir().expect("Failed to get current directory");
-    if !ugit::base::is_ugit_repository(&cwd) {
+    if !base::is_ugit_repository(&cwd) {
         eprintln!("Not a ugit repository.");
         process::exit(1);
     }
