@@ -19,6 +19,7 @@ fn main() {
     const ABOUT_LOG: &str = "Print the commit history, optionally beginning at the specified OID";
     const ABOUT_CHECKOUT: &str =
         "Restore the working tree to that of the commit with the specified OID";
+    const ABOUT_TAG: &str = "Create a reference with the specified name";
 
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
@@ -64,6 +65,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("tag")
+                .about(ABOUT_TAG)
                 .arg(Arg::with_name("name").required(true))
                 .arg(Arg::with_name("oid").required(true)),
         )
