@@ -17,6 +17,8 @@ fn main() {
         "Replace the contents of the current directory with the tree with the specified OID";
     const ABOUT_COMMIT: &str = "Commit the current directory";
     const ABOUT_LOG: &str = "Print the commit history, optionally beginning at the specified OID";
+    const ABOUT_CHECKOUT: &str =
+        "Restore the working tree to that of the commit with the specified OID";
 
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
@@ -56,7 +58,9 @@ fn main() {
                 .arg(Arg::with_name("commit_oid").takes_value(true)),
         )
         .subcommand(
-            SubCommand::with_name("checkout").arg(Arg::with_name("commit_oid").required(true)),
+            SubCommand::with_name("checkout")
+                .about(ABOUT_CHECKOUT)
+                .arg(Arg::with_name("commit_oid").required(true)),
         )
         .subcommand(
             SubCommand::with_name("tag")
