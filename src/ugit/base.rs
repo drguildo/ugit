@@ -4,13 +4,15 @@ use std::{
     path::{self, Path},
 };
 
+use super::{data, Commit, UGIT_DIR};
+
 pub fn get_oid(name: &str) -> String {
-    super::data::get_ref(name).unwrap_or(name.to_owned())
+    data::get_ref(name).unwrap_or(name.to_owned())
 }
 
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
-    super::data::update_ref(&ref_path, oid);
+    data::update_ref(&ref_path, oid);
 }
 
 /// Store the contents of the current directory to the object database, creates a commit object and
@@ -21,19 +23,19 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(head_oid) = super::data::get_ref("HEAD") {
+    if let Some(head_oid) = data::get_ref("HEAD") {
         commit.push_str(format!("parent {}\n", head_oid).as_str());
     }
     commit.push_str("\n");
     commit.push_str(message);
 
-    let commit_oid = super::data::hash_object(&commit.as_bytes().to_vec(), "commit");
-    super::data::update_ref("HEAD", &commit_oid);
+    let commit_oid = data::hash_object(&commit.as_bytes().to_vec(), "commit");
+    data::update_ref("HEAD", &commit_oid);
     Some(commit_oid)
 }
 
-pub fn get_commit(oid: &str) -> super::Commit {
-    let commit_data = super::data::get_object(oid, Some("commit"));
+pub fn get_commit(oid: &str) -> Commit {
+    let commit_data = data::get_object(oid, Some("commit"));
     let commit = String::from_utf8(commit_data).expect("Commit contains invalid data");
     let mut commit_lines = commit.lines();
 
@@ -56,7 +58,7 @@ pub fn get_commit(oid: &str) -> super::Commit {
     let message: String = commit_lines.collect();
 
     if let Some(tree_oid) = tree_oid {
-        super::Commit {
+        Commit {
             tree: tree_oid.to_string(),
             parent: parent_oid.map(ToOwned::to_owned),
             message,
@@ -77,7 +79,7 @@ pub fn write_tree(path: &Path) -> Option<String> {
         let path = dir_entry.expect("Failed to read directory entry").path();
         if path.is_file() {
             let contents = std::fs::read(&path).expect("Failed to read file contents");
-            let oid = super::data::hash_object(&contents, "blob");
+            let oid = data::hash_object(&contents, "blob");
             let file_name = path
                 .file_name()
                 .expect("Failed to get file name for path")
@@ -100,7 +102,7 @@ pub fn write_tree(path: &Path) -> Option<String> {
         let tree_row = format!("{} {} {}\n", object_type, oid, path_string);
         tree.push_str(tree_row.as_str());
     }
-    let oid = super::data::hash_object(&tree.into_bytes(), "tree");
+    let oid = data::hash_object(&tree.into_bytes(), "tree");
 
     Some(oid)
 }
@@ -122,7 +124,7 @@ pub fn read_tree(tree_oid: &str) {
             std::fs::create_dir_all(directories).expect("Failed to create parent directories");
         }
 
-        let contents = super::data::get_object(oid.as_str(), None);
+        let contents = data::get_object(oid.as_str(), None);
         std::fs::write(path, contents).expect("Failed to write file contents");
     }
 }
@@ -130,7 +132,7 @@ pub fn read_tree(tree_oid: &str) {
 /// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
 /// and their paths.
 fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> {
-    let tree_object = super::data::get_object(oid, Some("tree"));
+    let tree_object = data::get_object(oid, Some("tree"));
     let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
 
     let base_path = base_path.unwrap_or("");
@@ -170,21 +172,21 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
 pub fn checkout(oid: &str) {
     let commit = get_commit(oid);
     read_tree(&commit.tree);
-    super::data::update_ref("HEAD", oid);
+    data::update_ref("HEAD", oid);
 }
 
 /// Whether the specified path is a ugit repository. This is overly simplistic and should really
 /// check whether the .ugit directory at least contains an objects sub-directory.
 pub fn is_ugit_repository(path: &Path) -> bool {
     let mut ugit_data_dir = path.to_owned();
-    ugit_data_dir.push(super::UGIT_DIR);
+    ugit_data_dir.push(UGIT_DIR);
     ugit_data_dir.is_dir()
 }
 
 /// Whether or not the specified path should not be added to the object store.
 fn is_ignored(path: &Path) -> bool {
     path.components()
-        .any(|c| c == Component::Normal(super::UGIT_DIR.as_ref()))
+        .any(|c| c == Component::Normal(UGIT_DIR.as_ref()))
 }
 
 /// Whether a path contains illegal components.

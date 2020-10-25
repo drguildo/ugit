@@ -3,9 +3,11 @@ use std::{io::Write as _, path::PathBuf};
 
 use sha1::{Digest, Sha1};
 
+use super::UGIT_DIR;
+
 /// Create a new ugit repository.
 pub fn init() {
-    let mut path = PathBuf::from(super::UGIT_DIR);
+    let mut path = PathBuf::from(UGIT_DIR);
     fs::create_dir(&path).expect("Failed to create .ugit directory");
 
     path.push("objects");
@@ -58,7 +60,7 @@ pub fn update_ref(reference: &str, oid: &str) {
     let ref_path = std::path::Path::new(reference);
     assert!(!ref_path.is_absolute());
 
-    let mut path = PathBuf::from(super::UGIT_DIR);
+    let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
     fs::create_dir_all(path.parent().unwrap())
         .expect("Failed to create reference directory structure");
@@ -67,7 +69,7 @@ pub fn update_ref(reference: &str, oid: &str) {
 
 /// Retrieves the OID that the specified reference is mapped to.
 pub fn get_ref(reference: &str) -> Option<String> {
-    let mut path = PathBuf::from(super::UGIT_DIR);
+    let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
     if path.exists() {
         let data = fs::read(path).expect("Failed to read reference");
@@ -92,7 +94,7 @@ fn generate_oid(bytes: &[u8]) -> String {
 /// Return the path to an object in the object database.
 fn get_object_path(oid: &str) -> PathBuf {
     let mut path = PathBuf::new();
-    path.push(super::UGIT_DIR);
+    path.push(UGIT_DIR);
     path.push("objects");
     path.push(oid);
     path
