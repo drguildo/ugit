@@ -86,7 +86,7 @@ fn generate_oid(bytes: &[u8]) -> String {
     let result = hasher.finalize();
     let mut oid = String::new();
     for byte in result {
-        write!(&mut oid, "{:x}", byte).expect("Unable to construct object filename");
+        write!(&mut oid, "{:02x}", byte).expect("Unable to construct object filename");
     }
     oid
 }
