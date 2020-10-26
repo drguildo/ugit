@@ -7,7 +7,26 @@ use std::{
 use super::{data, Commit, UGIT_DIR};
 
 pub fn get_oid(name: &str) -> String {
-    data::get_ref(name).unwrap_or(name.to_owned())
+    let refs_to_try: Vec<String> = vec![
+        format!("{}", name),
+        format!("refs/{}", name),
+        format!("refs/tags/{}", name),
+        format!("refs/heads/{}", name),
+    ];
+
+    for reference in refs_to_try {
+        let reference = data::get_ref(&reference);
+        if reference.is_some() {
+            return reference.unwrap();
+        }
+    }
+
+    let is_hex = name.chars().all(|c| c.is_ascii_hexdigit());
+    if name.len() == 40 && is_hex {
+        return name.to_owned();
+    }
+
+    panic!(format!("Unknown name {}", name));
 }
 
 pub fn create_tag(name: &str, oid: &str) {
