@@ -55,7 +55,7 @@ fn main() {
         .subcommand(
             SubCommand::with_name("log")
                 .about(ABOUT_LOG)
-                .arg(Arg::with_name("commit_oid").takes_value(true)),
+                .arg(Arg::with_name("commit_oid").default_value("@")),
         )
         .subcommand(
             SubCommand::with_name("checkout")
@@ -66,7 +66,7 @@ fn main() {
             SubCommand::with_name("tag")
                 .about(ABOUT_TAG)
                 .arg(Arg::with_name("name").required(true))
-                .arg(Arg::with_name("oid").required(true)),
+                .arg(Arg::with_name("oid").default_value("@")),
         )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
@@ -119,16 +119,8 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("log") {
-        if let Some(commit_oid) = matches.value_of("commit_oid") {
-            log(&base::get_oid(commit_oid));
-        } else {
-            let head_oid = data::get_ref("HEAD");
-            if head_oid.is_none() {
-                eprintln!("No commit OID specified and no HEAD found");
-                process::exit(1);
-            }
-            log(head_oid.unwrap().as_str());
-        };
+        let commit_oid = matches.value_of("commit_oid").unwrap();
+        log(&base::get_oid(commit_oid));
         process::exit(0);
     }
 
