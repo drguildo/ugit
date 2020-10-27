@@ -17,12 +17,14 @@ pub fn get_oid(name: &str) -> String {
     for reference in refs_to_try {
         let reference = data::get_ref(&reference);
         if reference.is_some() {
+            // Name is a ref.
             return reference.unwrap();
         }
     }
 
     let is_hex = name.chars().all(|c| c.is_ascii_hexdigit());
     if name.len() == 40 && is_hex {
+        // Name is an OID.
         return name.to_owned();
     }
 
