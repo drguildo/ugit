@@ -68,6 +68,7 @@ fn main() {
                 .arg(Arg::with_name("name").required(true))
                 .arg(Arg::with_name("oid").default_value("@")),
         )
+        .subcommand(SubCommand::with_name("k"))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -136,6 +137,11 @@ fn main() {
         base::create_tag(name, &oid);
         process::exit(0);
     }
+
+    if let Some(_matches) = matches.subcommand_matches("k") {
+        k();
+        process::exit(0);
+    }
 }
 
 /// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
@@ -148,6 +154,12 @@ fn log(oid: &str) {
         println!("commit {}", oid);
         println!("{}\n", commit.message);
         oid_opt = commit.parent;
+    }
+}
+
+fn k() {
+    for (refname, oid) in data::get_refs() {
+        println!("{} {}", refname, oid);
     }
 }
 

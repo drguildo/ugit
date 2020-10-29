@@ -1,5 +1,4 @@
-use std::{fmt::Write as _, fs};
-use std::{io::Write as _, path::PathBuf};
+use std::{fmt::Write as _, fs, io::Write as _, path::Path, path::PathBuf};
 
 use sha1::{Digest, Sha1};
 
@@ -77,6 +76,50 @@ pub fn get_ref(reference: &str) -> Option<String> {
     } else {
         None
     }
+}
+
+pub fn get_refs() -> Vec<(String, String)> {
+    let mut refs_path = PathBuf::from(UGIT_DIR);
+    refs_path.push("refs");
+
+    let mut ref_names = find_ref_names(&refs_path);
+    ref_names.push("HEAD".to_string());
+
+    let mut refs_to_oid: Vec<(String, String)> = vec![];
+    for ref_name in ref_names {
+        let oid = get_ref(&ref_name).expect("Failed to get OID for reference");
+        refs_to_oid.push((ref_name, oid));
+    }
+
+    refs_to_oid
+}
+
+fn find_ref_names(path: &Path) -> Vec<String> {
+    let mut ref_names: Vec<String> = vec![];
+
+    let dir = std::fs::read_dir(path).unwrap();
+    for dir_entry in dir {
+        let dir_entry_path = dir_entry.unwrap().path();
+        if dir_entry_path.is_file() {
+            let ref_name = path_to_ref_name(&dir_entry_path);
+            ref_names.push(ref_name);
+        } else if dir_entry_path.is_dir() {
+            let mut subdir_ref_names = find_ref_names(&dir_entry_path);
+            ref_names.append(subdir_ref_names.as_mut());
+        }
+    }
+
+    ref_names
+}
+
+fn path_to_ref_name(path: &Path) -> String {
+    let ref_name = path
+        .components()
+        .skip(1) // Don't include the ugit directory in the generated name.
+        .map(|c| c.as_os_str().to_str().unwrap())
+        .collect::<Vec<&str>>()
+        .join("/");
+    ref_name
 }
 
 /// Generates an OID from a byte vector.
