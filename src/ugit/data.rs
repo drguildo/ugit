@@ -113,13 +113,11 @@ fn find_ref_names(path: &Path) -> Vec<String> {
 }
 
 fn path_to_ref_name(path: &Path) -> String {
-    let ref_name = path
-        .components()
+    path.components()
         .skip(1) // Don't include the ugit directory in the generated name.
         .map(|c| c.as_os_str().to_str().unwrap())
         .collect::<Vec<&str>>()
-        .join("/");
-    ref_name
+        .join("/")
 }
 
 /// Generates an OID from a byte vector.
