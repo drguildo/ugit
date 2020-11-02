@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     env, fs,
     io::{self, Write},
     process,
@@ -158,8 +159,18 @@ fn log(oid: &str) {
 }
 
 fn k() {
+    let mut ref_oids: HashSet<String> = HashSet::new();
     for (refname, oid) in data::get_refs() {
         println!("{} {}", refname, oid);
+        ref_oids.insert(oid);
+    }
+
+    for oid in base::get_commits_and_parents(ref_oids.iter().map(String::as_str).collect()) {
+        let commit = base::get_commit(&oid);
+        println!("{}", oid);
+        if let Some(parent_oid) = commit.parent {
+            println!("Parent: {}", parent_oid);
+        }
     }
 }
 

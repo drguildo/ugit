@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     env, ffi, fs,
     path::Component,
     path::{self, Path},
@@ -198,6 +199,23 @@ pub fn checkout(oid: &str) {
     let commit = get_commit(oid);
     read_tree(&commit.tree);
     data::update_ref("HEAD", oid);
+}
+
+/// Retrieve the OIDs of all the commits that are reachable from the commits with the specified
+/// OIDs.
+pub fn get_commits_and_parents(oids: Vec<&str>) -> Vec<String> {
+    let mut visited: HashSet<String> = HashSet::new();
+
+    for oid in oids {
+        let mut commit: Commit = get_commit(oid);
+        visited.insert(oid.to_owned());
+        while let Some(parent_oid) = commit.parent {
+            commit = get_commit(&parent_oid);
+            visited.insert(parent_oid);
+        }
+    }
+
+    visited.into_iter().collect()
 }
 
 /// Whether the specified path is a ugit repository. This is overly simplistic and should really
