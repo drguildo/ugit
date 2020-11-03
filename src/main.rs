@@ -159,19 +159,34 @@ fn log(oid: &str) {
 }
 
 fn k() {
+    let mut dot = String::new();
+    dot.push_str("digraph commits {\n");
+
     let mut ref_oids: HashSet<String> = HashSet::new();
     for (refname, oid) in data::get_refs() {
-        println!("{} {}", refname, oid);
+        dot.push_str(format!("\"{}\" [shape=note]\n", refname).as_str());
+        dot.push_str(format!("\"{}\" -> \"{}\"\n", refname, oid).as_str());
         ref_oids.insert(oid);
     }
 
     for oid in base::get_commits_and_parents(ref_oids.iter().map(String::as_str).collect()) {
         let commit = base::get_commit(&oid);
-        println!("{}", oid);
+        dot.push_str(
+            format!(
+                "\"{}\" [shape=box style=filled label=\"{}\"]\n",
+                oid,
+                oid.chars().take(10).collect::<String>()
+            )
+            .as_str(),
+        );
         if let Some(parent_oid) = commit.parent {
-            println!("Parent: {}", parent_oid);
+            dot.push_str(format!("\"{}\" -> \"{}\"\n", oid, parent_oid).as_str());
         }
     }
+
+    dot.push_str("}");
+
+    println!("{}", dot);
 }
 
 fn exit_if_not_repository() {
