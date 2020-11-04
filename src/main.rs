@@ -148,13 +148,10 @@ fn main() {
 /// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
 /// same for the parent commit, if it exists.
 fn log(oid: &str) {
-    let mut oid_opt = Some(oid.to_string());
-    while oid_opt.is_some() {
-        let oid = oid_opt.unwrap();
+    for oid in base::get_commits_and_parents(vec![oid]) {
         let commit = base::get_commit(&oid);
         println!("commit {}", oid);
         println!("{}\n", commit.message);
-        oid_opt = commit.parent;
     }
 }
 
