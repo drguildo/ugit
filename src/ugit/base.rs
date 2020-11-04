@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashSet, VecDeque},
     env, ffi, fs,
     path::Component,
     path::{self, Path},
@@ -203,19 +203,32 @@ pub fn checkout(oid: &str) {
 
 /// Retrieve the OIDs of all the commits that are reachable from the commits with the specified
 /// OIDs.
-pub fn get_commits_and_parents(oids: Vec<&str>) -> Vec<String> {
-    let mut visited: HashSet<String> = HashSet::new();
+pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
+    let mut oids_to_visit: VecDeque<String> = VecDeque::new();
+    let mut visite_oids: HashSet<String> = HashSet::new();
 
-    for oid in oids {
-        let mut commit: Commit = get_commit(oid);
-        visited.insert(oid.to_owned());
-        while let Some(parent_oid) = commit.parent {
-            commit = get_commit(&parent_oid);
-            visited.insert(parent_oid);
+    for oid in root_oids {
+        oids_to_visit.push_back(oid.to_owned());
+    }
+
+    let mut oids: Vec<String> = vec![];
+    while let Some(oid) = oids_to_visit.pop_back() {
+        if visite_oids.contains(&oid) {
+            continue;
+        }
+
+        let commit: Commit = get_commit(&oid);
+
+        visite_oids.insert(oid.clone());
+
+        oids.push(oid.clone());
+
+        if let Some(parent_oid) = commit.parent {
+            oids_to_visit.push_back(parent_oid);
         }
     }
 
-    visited.into_iter().collect()
+    oids
 }
 
 /// Whether the specified path is a ugit repository. This is overly simplistic and should really
