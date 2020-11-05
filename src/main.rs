@@ -70,6 +70,11 @@ fn main() {
                 .arg(Arg::with_name("oid").default_value("@")),
         )
         .subcommand(SubCommand::with_name("k"))
+        .subcommand(
+            SubCommand::with_name("branch")
+                .arg(Arg::with_name("name").required(true))
+                .arg(Arg::with_name("start_point").default_value("@")),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -141,6 +146,18 @@ fn main() {
 
     if let Some(_matches) = matches.subcommand_matches("k") {
         k();
+        process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("branch") {
+        let name = matches.value_of("name").unwrap();
+        let start_point = base::get_oid(matches.value_of("start_point").unwrap());
+        base::create_branch(name, &start_point);
+        println!(
+            "Branch {} created at {}",
+            name,
+            start_point.chars().take(10).collect::<String>()
+        );
         process::exit(0);
     }
 }

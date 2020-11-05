@@ -41,6 +41,11 @@ pub fn create_tag(name: &str, oid: &str) {
     data::update_ref(&ref_path, oid);
 }
 
+pub fn create_branch(name: &str, oid: &str) {
+    let ref_path = format!("refs/heads/{}", name);
+    data::update_ref(&ref_path, oid);
+}
+
 /// Store the contents of the current directory to the object database, creates a commit object and
 /// updates the HEAD.
 pub fn commit(message: &str) -> Option<String> {
