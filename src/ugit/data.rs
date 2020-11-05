@@ -4,6 +4,11 @@ use sha1::{Digest, Sha1};
 
 use super::UGIT_DIR;
 
+pub struct RefValue {
+    pub symbolic: bool,
+    pub value: String,
+}
+
 /// Create a new ugit repository.
 pub fn init() {
     let mut path = PathBuf::from(UGIT_DIR);
@@ -54,8 +59,10 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
     data.to_vec()
 }
 
-/// Map the specified reference to the specified OID.
-pub fn update_ref(reference: &str, oid: &str) {
+/// Map the specified reference to the specified value.
+pub fn update_ref(reference: &str, value: &RefValue) {
+    assert!(!value.symbolic);
+
     let ref_path = std::path::Path::new(reference);
     assert!(!ref_path.is_absolute());
 
@@ -63,11 +70,11 @@ pub fn update_ref(reference: &str, oid: &str) {
     path.push(reference);
     fs::create_dir_all(path.parent().unwrap())
         .expect("Failed to create reference directory structure");
-    fs::write(path, oid).expect("Failed to update reference");
+    fs::write(path, &value.value).expect("Failed to update reference");
 }
 
 /// Retrieves the OID that the specified reference is mapped to.
-pub fn get_ref(reference: &str) -> Option<String> {
+pub fn get_ref(reference: &str) -> Option<RefValue> {
     let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
 
@@ -77,30 +84,33 @@ pub fn get_ref(reference: &str) -> Option<String> {
             String::from_utf8(ref_data).expect("Failed to convert reference data to OID");
         if ref_string.starts_with("ref:") {
             let true_ref = ref_string.split(":").nth(1).expect("Failed to extract ref");
-            let oid = get_ref(true_ref).expect("Failed to resolve ref to OID");
-            Some(oid.to_owned())
+            let ref_value = get_ref(true_ref).expect("Failed to resolve ref to OID");
+            Some(ref_value)
         } else {
-            Some(ref_string)
+            Some(RefValue {
+                symbolic: false,
+                value: ref_string,
+            })
         }
     } else {
         None
     }
 }
 
-pub fn get_refs() -> Vec<(String, String)> {
+pub fn get_refs() -> Vec<(String, RefValue)> {
     let mut refs_path = PathBuf::from(UGIT_DIR);
     refs_path.push("refs");
 
     let mut ref_names = find_ref_names(&refs_path);
     ref_names.push("HEAD".to_string());
 
-    let mut refs_to_oid: Vec<(String, String)> = vec![];
+    let mut refs_to_values: Vec<(String, RefValue)> = vec![];
     for ref_name in ref_names {
-        let oid = get_ref(&ref_name).expect("Failed to get OID for reference");
-        refs_to_oid.push((ref_name, oid));
+        let ref_value = get_ref(&ref_name).expect("Failed to get OID for reference");
+        refs_to_values.push((ref_name, ref_value));
     }
 
-    refs_to_oid
+    refs_to_values
 }
 
 fn find_ref_names(path: &Path) -> Vec<String> {

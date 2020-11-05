@@ -20,10 +20,10 @@ pub fn get_oid(mut name: &str) -> String {
     ];
 
     for reference in refs_to_try {
-        let reference = data::get_ref(&reference);
-        if reference.is_some() {
+        let ref_value = data::get_ref(&reference);
+        if ref_value.is_some() {
             // Name is a ref.
-            return reference.unwrap();
+            return ref_value.unwrap().value.to_owned();
         }
     }
 
@@ -38,12 +38,24 @@ pub fn get_oid(mut name: &str) -> String {
 
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
-    data::update_ref(&ref_path, oid);
+    data::update_ref(
+        &ref_path,
+        &data::RefValue {
+            symbolic: false,
+            value: oid.to_owned(),
+        },
+    );
 }
 
 pub fn create_branch(name: &str, oid: &str) {
     let ref_path = format!("refs/heads/{}", name);
-    data::update_ref(&ref_path, oid);
+    data::update_ref(
+        &ref_path,
+        &data::RefValue {
+            symbolic: false,
+            value: oid.to_owned(),
+        },
+    );
 }
 
 /// Store the contents of the current directory to the object database, creates a commit object and
@@ -54,14 +66,20 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(head_oid) = data::get_ref("HEAD") {
-        commit.push_str(format!("parent {}\n", head_oid).as_str());
+    if let Some(ref_value) = data::get_ref("HEAD") {
+        commit.push_str(format!("parent {}\n", ref_value.value).as_str());
     }
     commit.push_str("\n");
     commit.push_str(message);
 
     let commit_oid = data::hash_object(&commit.as_bytes().to_vec(), "commit");
-    data::update_ref("HEAD", &commit_oid);
+    data::update_ref(
+        "HEAD",
+        &data::RefValue {
+            symbolic: false,
+            value: commit_oid.clone(),
+        },
+    );
     Some(commit_oid)
 }
 
@@ -203,7 +221,13 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
 pub fn checkout(oid: &str) {
     let commit = get_commit(oid);
     read_tree(&commit.tree);
-    data::update_ref("HEAD", oid);
+    data::update_ref(
+        "HEAD",
+        &data::RefValue {
+            symbolic: false,
+            value: oid.to_owned(),
+        },
+    );
 }
 
 /// Retrieve the OIDs of all the commits that are reachable from the commits with the specified
