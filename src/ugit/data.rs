@@ -70,9 +70,18 @@ pub fn update_ref(reference: &str, oid: &str) {
 pub fn get_ref(reference: &str) -> Option<String> {
     let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
+
     if path.exists() {
-        let data = fs::read(path).expect("Failed to read reference");
-        Some(String::from_utf8(data).expect("Failed to convert reference data to OID"))
+        let ref_data = fs::read(path).expect("Failed to read reference");
+        let ref_string =
+            String::from_utf8(ref_data).expect("Failed to convert reference data to OID");
+        if ref_string.starts_with("ref:") {
+            let true_ref = ref_string.split(":").nth(1).expect("Failed to extract ref");
+            let oid = get_ref(true_ref).expect("Failed to resolve ref to OID");
+            Some(oid.to_owned())
+        } else {
+            Some(ref_string)
+        }
     } else {
         None
     }
