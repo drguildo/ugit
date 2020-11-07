@@ -75,6 +75,11 @@ pub fn update_ref(reference: &str, value: &RefValue) {
 
 /// Retrieves the OID that the specified reference is mapped to.
 pub fn get_ref(reference: &str) -> Option<RefValue> {
+    let ref_value = get_ref_internal(reference);
+    ref_value.map(|rv| rv.1)
+}
+
+fn get_ref_internal(reference: &str) -> Option<(String, RefValue)> {
     let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
 
@@ -82,15 +87,19 @@ pub fn get_ref(reference: &str) -> Option<RefValue> {
         let ref_data = fs::read(path).expect("Failed to read reference");
         let ref_string =
             String::from_utf8(ref_data).expect("Failed to convert reference data to OID");
-        if ref_string.starts_with("ref:") {
+        let is_symbolic = ref_string.starts_with("ref:");
+        if is_symbolic {
             let true_ref = ref_string.split(":").nth(1).expect("Failed to extract ref");
-            let ref_value = get_ref(true_ref).expect("Failed to resolve ref to OID");
+            let ref_value = get_ref_internal(true_ref).expect("Failed to resolve ref to OID");
             Some(ref_value)
         } else {
-            Some(RefValue {
-                symbolic: false,
-                value: ref_string,
-            })
+            Some((
+                reference.to_owned(),
+                RefValue {
+                    symbolic: false,
+                    value: ref_string,
+                },
+            ))
         }
     } else {
         None
