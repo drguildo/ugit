@@ -20,7 +20,7 @@ pub fn get_oid(mut name: &str) -> String {
     ];
 
     for reference in refs_to_try {
-        let ref_value = data::get_ref(&reference);
+        let ref_value = data::get_ref(&reference, false);
         if ref_value.is_some() {
             // Name is a ref.
             return ref_value.unwrap().value.to_owned();
@@ -44,6 +44,7 @@ pub fn create_tag(name: &str, oid: &str) {
             symbolic: false,
             value: oid.to_owned(),
         },
+        true,
     );
 }
 
@@ -55,6 +56,7 @@ pub fn create_branch(name: &str, oid: &str) {
             symbolic: false,
             value: oid.to_owned(),
         },
+        true,
     );
 }
 
@@ -66,7 +68,7 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(ref_value) = data::get_ref("HEAD") {
+    if let Some(ref_value) = data::get_ref("HEAD", true) {
         commit.push_str(format!("parent {}\n", ref_value.value).as_str());
     }
     commit.push_str("\n");
@@ -79,6 +81,7 @@ pub fn commit(message: &str) -> Option<String> {
             symbolic: false,
             value: commit_oid.clone(),
         },
+        true,
     );
     Some(commit_oid)
 }
@@ -227,6 +230,7 @@ pub fn checkout(oid: &str) {
             symbolic: false,
             value: oid.to_owned(),
         },
+        true,
     );
 }
 
