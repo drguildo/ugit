@@ -61,17 +61,21 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 
 /// Map the specified reference to the specified value.
 pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
-    assert!(!value.symbolic);
-
     let reference = get_ref_internal(reference, deref)
         .expect("Failed to get reference")
         .0;
+
+    let new_ref_value = if value.symbolic {
+        format!("ref: {}", value.value)
+    } else {
+        value.value.clone()
+    };
 
     let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
     fs::create_dir_all(path.parent().unwrap())
         .expect("Failed to create reference directory structure");
-    fs::write(path, &value.value).expect("Failed to update reference");
+    fs::write(path, new_ref_value).expect("Failed to update reference");
 }
 
 /// Retrieves the OID that the specified reference is mapped to.
