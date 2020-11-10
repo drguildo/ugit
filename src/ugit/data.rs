@@ -61,9 +61,7 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 
 /// Map the specified reference to the specified value.
 pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
-    let reference = get_ref_internal(reference, deref)
-        .expect("Failed to get reference")
-        .0;
+    let reference = get_ref_internal(reference, deref).0;
 
     let new_ref_value = if value.symbolic {
         format!("ref: {}", value.value)
@@ -81,10 +79,10 @@ pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
 /// Retrieves the OID that the specified reference is mapped to.
 pub fn get_ref(reference: &str, deref: bool) -> Option<RefValue> {
     let ref_value = get_ref_internal(reference, deref);
-    ref_value.map(|rv| rv.1)
+    ref_value.1
 }
 
-fn get_ref_internal(reference: &str, deref: bool) -> Option<(String, RefValue)> {
+fn get_ref_internal(reference: &str, deref: bool) -> (String, Option<RefValue>) {
     let mut path = PathBuf::from(UGIT_DIR);
     path.push(reference);
 
@@ -97,20 +95,19 @@ fn get_ref_internal(reference: &str, deref: bool) -> Option<(String, RefValue)> 
         if is_symbolic {
             reference = ref_string.replacen("ref:", "", 1).to_owned();
             if deref {
-                let ref_value =
-                    get_ref_internal(&reference, true).expect("Failed to resolve ref to OID");
-                return Some(ref_value);
+                let ref_value = get_ref_internal(&reference, true);
+                return ref_value;
             }
         }
-        return Some((
+        return (
             reference,
-            RefValue {
+            Some(RefValue {
                 symbolic: false,
                 value: ref_string,
-            },
-        ));
+            }),
+        );
     } else {
-        return None;
+        return (reference, None);
     }
 }
 
