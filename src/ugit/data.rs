@@ -4,6 +4,7 @@ use sha1::{Digest, Sha1};
 
 use super::UGIT_DIR;
 
+#[derive(Debug)]
 pub struct RefValue {
     pub symbolic: bool,
     pub value: String,
