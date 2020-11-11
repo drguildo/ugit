@@ -7,7 +7,7 @@ use super::UGIT_DIR;
 #[derive(Debug)]
 pub struct RefValue {
     pub symbolic: bool,
-    pub value: String,
+    pub value: Option<String>,
 }
 
 /// Create a new ugit repository.
@@ -64,10 +64,11 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
     let reference = get_ref_internal(reference, deref).0;
 
+    assert!(value.value.is_some());
     let new_ref_value = if value.symbolic {
-        format!("ref: {}", value.value)
+        format!("ref: {}", value.value.as_ref().unwrap())
     } else {
-        value.value.clone()
+        value.value.to_owned().unwrap()
     };
 
     let mut path = PathBuf::from(UGIT_DIR);
@@ -78,38 +79,31 @@ pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
 }
 
 /// Retrieves the OID that the specified reference is mapped to.
-pub fn get_ref(reference: &str, deref: bool) -> Option<RefValue> {
+pub fn get_ref(reference: &str, deref: bool) -> RefValue {
     let ref_value = get_ref_internal(reference, deref);
     ref_value.1
 }
 
-fn get_ref_internal(reference: &str, deref: bool) -> (String, Option<RefValue>) {
-    let mut path = PathBuf::from(UGIT_DIR);
-    path.push(reference);
+fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
+    let mut ref_path = PathBuf::from(UGIT_DIR);
+    ref_path.push(reference);
 
-    let mut reference: String = reference.to_owned();
-    if path.exists() {
-        let ref_data = fs::read(path).expect("Failed to read reference");
-        let ref_string =
-            String::from_utf8(ref_data).expect("Failed to convert reference data to OID");
-        let is_symbolic = ref_string.starts_with("ref:");
-        if is_symbolic {
-            reference = ref_string.replacen("ref:", "", 1).to_owned();
-            if deref {
-                let ref_value = get_ref_internal(&reference, true);
-                return ref_value;
-            }
-        }
-        return (
-            reference,
-            Some(RefValue {
-                symbolic: false,
-                value: ref_string,
-            }),
-        );
-    } else {
-        return (reference, None);
+    let mut value: Option<String> = None;
+
+    let reference: String = reference.to_owned();
+    if ref_path.is_file() {
+        let ref_string = fs::read_to_string(ref_path).expect("Failed to read reference");
+        value = Some(ref_string);
     }
+
+    let symbolic = value.as_ref().map_or(false, |s| s.starts_with("ref:"));
+    if symbolic {
+        value = value.as_ref().map(|s| s.replacen("ref: ", "", 1));
+        if deref {
+            return get_ref_internal(&value.unwrap(), true);
+        }
+    }
+    return (reference, RefValue { symbolic, value });
 }
 
 pub fn get_refs(deref: bool) -> Vec<(String, RefValue)> {
@@ -121,7 +115,7 @@ pub fn get_refs(deref: bool) -> Vec<(String, RefValue)> {
 
     let mut refs_to_values: Vec<(String, RefValue)> = vec![];
     for ref_name in ref_names {
-        let ref_value = get_ref(&ref_name, deref).expect("Failed to get OID for reference");
+        let ref_value = get_ref(&ref_name, deref);
         refs_to_values.push((ref_name, ref_value));
     }
 

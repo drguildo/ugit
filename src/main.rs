@@ -179,9 +179,18 @@ fn k() {
     let mut ref_oids: HashSet<String> = HashSet::new();
     for (refname, ref_value) in data::get_refs(false) {
         dot.push_str(format!("\"{}\" [shape=note]\n", refname).as_str());
-        dot.push_str(format!("\"{}\" -> \"{}\"\n", refname, ref_value.value).as_str());
+        dot.push_str(
+            format!(
+                "\"{}\" -> \"{}\"\n",
+                refname,
+                ref_value.value.as_ref().unwrap()
+            )
+            .as_str(),
+        );
         if !ref_value.symbolic {
-            ref_oids.insert(ref_value.value.to_owned());
+            if ref_value.value.is_some() {
+                ref_oids.insert(ref_value.value.unwrap());
+            }
         }
     }
 

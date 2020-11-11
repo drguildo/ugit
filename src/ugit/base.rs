@@ -21,9 +21,9 @@ pub fn get_oid(mut name: &str) -> String {
 
     for reference in refs_to_try {
         let ref_value = data::get_ref(&reference, false);
-        if ref_value.is_some() {
+        if ref_value.value.is_some() {
             // Name is a ref.
-            return ref_value.unwrap().value.to_owned();
+            return data::get_ref(&reference, true).value.unwrap();
         }
     }
 
@@ -42,7 +42,7 @@ pub fn create_tag(name: &str, oid: &str) {
         &ref_path,
         &data::RefValue {
             symbolic: false,
-            value: oid.to_owned(),
+            value: Some(oid.to_owned()),
         },
         true,
     );
@@ -54,14 +54,16 @@ pub fn create_branch(name: &str, oid: &str) {
         &ref_path,
         &data::RefValue {
             symbolic: false,
-            value: oid.to_owned(),
+            value: Some(oid.to_owned()),
         },
         true,
     );
 }
 
 fn is_branch(branch: &str) -> bool {
-    data::get_ref(format!("refs/heads/{}", branch).as_str(), true).is_some()
+    data::get_ref(format!("refs/heads/{}", branch).as_str(), true)
+        .value
+        .is_some()
 }
 
 /// Store the contents of the current directory to the object database, creates a commit object and
@@ -72,8 +74,8 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(ref_value) = data::get_ref("HEAD", true) {
-        commit.push_str(format!("parent {}\n", ref_value.value).as_str());
+    if let Some(head) = data::get_ref("HEAD", true).value {
+        commit.push_str(format!("parent {}\n", head).as_str());
     }
     commit.push_str("\n");
     commit.push_str(message);
@@ -83,11 +85,11 @@ pub fn commit(message: &str) -> Option<String> {
         "HEAD",
         &data::RefValue {
             symbolic: false,
-            value: commit_oid.clone(),
+            value: Some(commit_oid.to_owned()),
         },
         true,
     );
-    Some(commit_oid)
+    Some(commit_oid.to_owned())
 }
 
 pub fn get_commit(oid: &str) -> Commit {
@@ -233,12 +235,12 @@ pub fn checkout(name: &str) {
     let head = if is_branch(name) {
         data::RefValue {
             symbolic: true,
-            value: format!("refs/heads/{}", name),
+            value: Some(format!("refs/heads/{}", name)),
         }
     } else {
         data::RefValue {
             symbolic: false,
-            value: oid,
+            value: Some(oid),
         }
     };
     data::update_ref("HEAD", &head, false);
