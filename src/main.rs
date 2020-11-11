@@ -61,7 +61,7 @@ fn main() {
         .subcommand(
             SubCommand::with_name("checkout")
                 .about(ABOUT_CHECKOUT)
-                .arg(Arg::with_name("commit_oid").required(true)),
+                .arg(Arg::with_name("commit").required(true)),
         )
         .subcommand(
             SubCommand::with_name("tag")
@@ -132,8 +132,8 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("checkout") {
-        let tree_oid = base::get_oid(matches.value_of("commit_oid").unwrap());
-        base::checkout(&tree_oid);
+        let commit = matches.value_of("commit").unwrap();
+        base::checkout(&commit);
         process::exit(0);
     }
 

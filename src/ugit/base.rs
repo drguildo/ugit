@@ -60,6 +60,10 @@ pub fn create_branch(name: &str, oid: &str) {
     );
 }
 
+fn is_branch(branch: &str) -> bool {
+    data::get_ref(format!("refs/heads/{}", branch).as_str(), true).is_some()
+}
+
 /// Store the contents of the current directory to the object database, creates a commit object and
 /// updates the HEAD.
 pub fn commit(message: &str) -> Option<String> {
@@ -221,17 +225,23 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
     result
 }
 
-pub fn checkout(oid: &str) {
-    let commit = get_commit(oid);
+pub fn checkout(name: &str) {
+    let oid = get_oid(name);
+    let commit = get_commit(&oid);
     read_tree(&commit.tree);
-    data::update_ref(
-        "HEAD",
-        &data::RefValue {
+
+    let head = if is_branch(name) {
+        data::RefValue {
+            symbolic: true,
+            value: format!("refs/heads/{}", name),
+        }
+    } else {
+        data::RefValue {
             symbolic: false,
-            value: oid.to_owned(),
-        },
-        true,
-    );
+            value: oid,
+        }
+    };
+    data::update_ref("HEAD", &head, false);
 }
 
 /// Retrieve the OIDs of all the commits that are reachable from the commits with the specified
