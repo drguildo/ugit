@@ -79,7 +79,7 @@ fn main() {
         .get_matches();
 
     if let Some(_matches) = matches.subcommand_matches("init") {
-        data::init();
+        base::init();
         process::exit(0);
     }
 

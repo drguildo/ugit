@@ -7,6 +7,19 @@ use std::{
 
 use super::{data, Commit, UGIT_DIR};
 
+/// Initialise a new repository and create a master branch.
+pub fn init() {
+    data::init();
+    data::update_ref(
+        "HEAD",
+        &data::RefValue {
+            symbolic: true,
+            value: Some("refs/heads/master".to_owned()),
+        },
+        true,
+    )
+}
+
 pub fn get_oid(mut name: &str) -> String {
     if name == "@" {
         name = "HEAD";
