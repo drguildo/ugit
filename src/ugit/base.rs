@@ -20,7 +20,7 @@ pub fn init() {
     )
 }
 
-pub fn get_oid(mut name: &str) -> String {
+pub fn get_oid(mut name: &str) -> Option<String> {
     if name == "@" {
         name = "HEAD";
     }
@@ -36,14 +36,14 @@ pub fn get_oid(mut name: &str) -> String {
         let ref_value = data::get_ref(&reference, false);
         if ref_value.value.is_some() {
             // Name is a ref.
-            return data::get_ref(&reference, true).value.unwrap();
+            return data::get_ref(&reference, true).value;
         }
     }
 
     let is_hex = name.chars().all(|c| c.is_ascii_hexdigit());
     if name.len() == 40 && is_hex {
         // Name is an OID.
-        return name.to_owned();
+        return Some(name.to_owned());
     }
 
     panic!(format!("Unknown name {}", name));
@@ -241,7 +241,7 @@ fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> 
 }
 
 pub fn checkout(name: &str) {
-    let oid = get_oid(name);
+    let oid = get_oid(name).unwrap();
     let commit = get_commit(&oid);
     read_tree(&commit.tree);
 

@@ -99,11 +99,12 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
-        let oid = base::get_oid(matches.value_of("oid").unwrap());
-        let contents = data::get_object(&oid, None);
-        io::stdout()
-            .write_all(&contents)
-            .expect("Failed to output file data");
+        if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
+            let contents = data::get_object(&oid, None);
+            io::stdout()
+                .write_all(&contents)
+                .expect("Failed to output file data");
+        }
         process::exit(0);
     }
 
@@ -114,8 +115,9 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("read-tree") {
-        let tree_oid = base::get_oid(matches.value_of("tree_oid").unwrap());
-        base::read_tree(&tree_oid);
+        if let Some(tree_oid) = base::get_oid(matches.value_of("tree_oid").unwrap()) {
+            base::read_tree(&tree_oid);
+        }
         process::exit(0);
     }
 
@@ -126,8 +128,9 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("log") {
-        let commit_oid = matches.value_of("commit_oid").unwrap();
-        log(&base::get_oid(commit_oid));
+        if let Some(commit_oid) = base::get_oid(matches.value_of("commit_oid").unwrap()) {
+            log(&commit_oid);
+        }
         process::exit(0);
     }
 
@@ -139,8 +142,9 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("tag") {
         let name = matches.value_of("name").unwrap();
-        let oid = base::get_oid(matches.value_of("oid").unwrap());
-        base::create_tag(name, &oid);
+        if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
+            base::create_tag(name, &oid);
+        }
         process::exit(0);
     }
 
@@ -151,13 +155,14 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("branch") {
         let name = matches.value_of("name").unwrap();
-        let start_point = base::get_oid(matches.value_of("start_point").unwrap());
-        base::create_branch(name, &start_point);
-        println!(
-            "Branch {} created at {}",
-            name,
-            start_point.chars().take(10).collect::<String>()
-        );
+        if let Some(start_point) = base::get_oid(matches.value_of("start_point").unwrap()) {
+            base::create_branch(name, &start_point);
+            println!(
+                "Branch {} created at {}",
+                name,
+                start_point.chars().take(10).collect::<String>()
+            );
+        }
         process::exit(0);
     }
 }
