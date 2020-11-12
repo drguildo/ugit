@@ -183,13 +183,13 @@ fn k() {
             format!(
                 "\"{}\" -> \"{}\"\n",
                 refname,
-                ref_value.value.as_ref().unwrap()
+                ref_value.value.clone().unwrap_or("None".to_owned())
             )
             .as_str(),
         );
         if !ref_value.symbolic {
-            if ref_value.value.is_some() {
-                ref_oids.insert(ref_value.value.unwrap());
+            if let Some(value) = ref_value.value {
+                ref_oids.insert(value);
             }
         }
     }

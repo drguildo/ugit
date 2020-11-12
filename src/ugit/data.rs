@@ -125,15 +125,16 @@ pub fn get_refs(deref: bool) -> Vec<(String, RefValue)> {
 fn find_ref_names(path: &Path) -> Vec<String> {
     let mut ref_names: Vec<String> = vec![];
 
-    let dir = std::fs::read_dir(path).unwrap();
-    for dir_entry in dir {
-        let dir_entry_path = dir_entry.unwrap().path();
-        if dir_entry_path.is_file() {
-            let ref_name = path_to_ref_name(&dir_entry_path);
-            ref_names.push(ref_name);
-        } else if dir_entry_path.is_dir() {
-            let mut subdir_ref_names = find_ref_names(&dir_entry_path);
-            ref_names.append(subdir_ref_names.as_mut());
+    if let Ok(dir) = std::fs::read_dir(path) {
+        for dir_entry in dir {
+            let dir_entry_path = dir_entry.unwrap().path();
+            if dir_entry_path.is_file() {
+                let ref_name = path_to_ref_name(&dir_entry_path);
+                ref_names.push(ref_name);
+            } else if dir_entry_path.is_dir() {
+                let mut subdir_ref_names = find_ref_names(&dir_entry_path);
+                ref_names.append(subdir_ref_names.as_mut());
+            }
         }
     }
 
