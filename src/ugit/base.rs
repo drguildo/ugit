@@ -263,7 +263,7 @@ pub fn checkout(name: &str) {
 /// OIDs.
 pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
     let mut oids_to_visit: VecDeque<String> = VecDeque::new();
-    let mut visite_oids: HashSet<String> = HashSet::new();
+    let mut visited_oids: HashSet<String> = HashSet::new();
 
     for oid in root_oids {
         oids_to_visit.push_back(oid.to_owned());
@@ -271,13 +271,13 @@ pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
 
     let mut oids: Vec<String> = vec![];
     while let Some(oid) = oids_to_visit.pop_back() {
-        if visite_oids.contains(&oid) {
+        if visited_oids.contains(&oid) {
             continue;
         }
 
         let commit: Commit = get_commit(&oid);
 
-        visite_oids.insert(oid.clone());
+        visited_oids.insert(oid.clone());
 
         oids.push(oid.clone());
 
