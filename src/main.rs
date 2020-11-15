@@ -79,7 +79,7 @@ fn main() {
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
-    if let Some(_matches) = matches.subcommand_matches("init") {
+    if matches.subcommand_matches("init").is_some() {
         base::init();
         process::exit(0);
     }
@@ -109,7 +109,7 @@ fn main() {
         process::exit(0);
     }
 
-    if let Some(_matches) = matches.subcommand_matches("write-tree") {
+    if matches.subcommand_matches("write-tree").is_some() {
         let cwd = env::current_dir().expect("Failed to get current working directory");
         base::write_tree(cwd.as_path());
         process::exit(0);
@@ -149,7 +149,7 @@ fn main() {
         process::exit(0);
     }
 
-    if let Some(_matches) = matches.subcommand_matches("k") {
+    if matches.subcommand_matches("k").is_some() {
         k();
         process::exit(0);
     }
@@ -167,7 +167,7 @@ fn main() {
         process::exit(0);
     }
 
-    if let Some(_matches) = matches.subcommand_matches("status") {
+    if matches.subcommand_matches("status").is_some() {
         status();
         process::exit(0);
     }
