@@ -73,6 +73,18 @@ pub fn create_branch(name: &str, oid: &str) {
     );
 }
 
+pub fn get_branch_name() -> Option<String> {
+    let head = data::get_ref("HEAD", false);
+    if !head.symbolic {
+        return None;
+    }
+    let head_ref = head.value.expect("HEAD does not contain a symbolic ref");
+    assert!(head_ref.starts_with("refs/heads/"));
+    // The original Python code uses os.path.relpath. Is there any problem with just doing a string
+    // replacement?
+    return Some(head_ref.replacen("refs/heads/", "", 1));
+}
+
 fn is_branch(branch: &str) -> bool {
     data::get_ref(format!("refs/heads/{}", branch).as_str(), true)
         .value

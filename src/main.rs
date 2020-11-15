@@ -75,6 +75,7 @@ fn main() {
                 .arg(Arg::with_name("name").required(true))
                 .arg(Arg::with_name("start_point").default_value("@")),
         )
+        .subcommand(SubCommand::with_name("status"))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -165,6 +166,11 @@ fn main() {
         }
         process::exit(0);
     }
+
+    if let Some(_matches) = matches.subcommand_matches("status") {
+        status();
+        process::exit(0);
+    }
 }
 
 /// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
@@ -217,6 +223,18 @@ fn k() {
     dot.push_str("}");
 
     println!("{}", dot);
+}
+
+fn status() {
+    let head = base::get_oid("@").expect("Failed to get HEAD");
+    if let Some(branch_name) = base::get_branch_name() {
+        println!("On branch {}", branch_name);
+    } else {
+        println!(
+            "HEAD detached at {}",
+            head.chars().take(10).collect::<String>()
+        );
+    }
 }
 
 fn exit_if_not_repository() {
