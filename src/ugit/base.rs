@@ -85,6 +85,14 @@ pub fn get_branch_name() -> Option<String> {
     return Some(head_ref.replacen("refs/heads/", "", 1));
 }
 
+pub fn get_branch_names() -> Vec<String> {
+    let mut branch_names = vec![];
+    for (ref_name, _ref_value) in data::get_refs(Some("refs/heads/"), true) {
+        branch_names.push(ref_name.replace("refs/heads/", ""));
+    }
+    branch_names
+}
+
 fn is_branch(branch: &str) -> bool {
     data::get_ref(format!("refs/heads/{}", branch).as_str(), true)
         .value

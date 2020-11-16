@@ -72,7 +72,7 @@ fn main() {
         .subcommand(SubCommand::with_name("k"))
         .subcommand(
             SubCommand::with_name("branch")
-                .arg(Arg::with_name("name").required(true))
+                .arg(Arg::with_name("name"))
                 .arg(Arg::with_name("start_point").default_value("@")),
         )
         .subcommand(SubCommand::with_name("status"))
@@ -155,14 +155,26 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("branch") {
-        let name = matches.value_of("name").unwrap();
-        if let Some(start_point) = base::get_oid(matches.value_of("start_point").unwrap()) {
-            base::create_branch(name, &start_point);
-            println!(
-                "Branch {} created at {}",
-                name,
-                start_point.chars().take(10).collect::<String>()
-            );
+        if let Some(name) = matches.value_of("name") {
+            if let Some(start_point) = base::get_oid(matches.value_of("start_point").unwrap()) {
+                base::create_branch(name, &start_point);
+                println!(
+                    "Branch {} created at {}",
+                    name,
+                    start_point.chars().take(10).collect::<String>()
+                );
+            }
+        } else {
+            let current = base::get_branch_name();
+            for branch in base::get_branch_names() {
+                if let Some(current) = &current {
+                    if branch == *current {
+                        println!("* {}", branch);
+                        continue;
+                    }
+                }
+                println!("{}", branch);
+            }
         }
         process::exit(0);
     }
@@ -188,7 +200,7 @@ fn k() {
     dot.push_str("digraph commits {\n");
 
     let mut ref_oids: HashSet<String> = HashSet::new();
-    for (refname, ref_value) in data::get_refs(false) {
+    for (refname, ref_value) in data::get_refs(None, false) {
         dot.push_str(format!("\"{}\" [shape=note]\n", refname).as_str());
         dot.push_str(
             format!(

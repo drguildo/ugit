@@ -106,7 +106,7 @@ fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
     return (reference, RefValue { symbolic, value });
 }
 
-pub fn get_refs(deref: bool) -> Vec<(String, RefValue)> {
+pub fn get_refs(prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
     let mut refs_path = PathBuf::from(UGIT_DIR);
     refs_path.push("refs");
 
@@ -115,6 +115,11 @@ pub fn get_refs(deref: bool) -> Vec<(String, RefValue)> {
 
     let mut refs_to_values: Vec<(String, RefValue)> = vec![];
     for ref_name in ref_names {
+        if let Some(prefix) = prefix {
+            if !ref_name.starts_with(prefix) {
+                continue;
+            }
+        }
         let ref_value = get_ref(&ref_name, deref);
         refs_to_values.push((ref_name, ref_value));
     }
