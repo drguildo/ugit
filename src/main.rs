@@ -188,9 +188,23 @@ fn main() {
 /// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
 /// same for the parent commit, if it exists.
 fn log(oid: &str) {
+    let mut oid_to_ref: std::collections::HashMap<String, Vec<String>> =
+        std::collections::HashMap::new();
+
+    for (ref_name, ref_value) in data::get_refs(None, true) {
+        if let Some(value) = ref_value.value {
+            let refs = oid_to_ref.entry(value).or_insert(Vec::new());
+            refs.push(ref_name);
+        }
+    }
+
     for oid in base::get_commits_and_parents(vec![oid]) {
         let commit = base::get_commit(&oid);
-        println!("commit {}", oid);
+        let refs_str = match oid_to_ref.get(&oid) {
+            Some(refs) => format!(" ({})", refs.join(", ")),
+            None => "".to_owned(),
+        };
+        println!("commit {}{}", oid, refs_str);
         println!("{}\n", commit.message);
     }
 }
