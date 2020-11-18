@@ -76,6 +76,7 @@ fn main() {
                 .arg(Arg::with_name("start_point").default_value("@")),
         )
         .subcommand(SubCommand::with_name("status"))
+        .subcommand(SubCommand::with_name("reset").arg(Arg::with_name("oid").required(true)))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -181,6 +182,13 @@ fn main() {
 
     if matches.subcommand_matches("status").is_some() {
         status();
+        process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("reset") {
+        if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
+            base::reset(&oid);
+        }
         process::exit(0);
     }
 }

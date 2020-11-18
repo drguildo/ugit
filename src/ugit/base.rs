@@ -49,6 +49,19 @@ pub fn get_oid(mut name: &str) -> Option<String> {
     panic!(format!("Unknown name {}", name));
 }
 
+/// Set HEAD to the specified OID. This differs from checkout in that it
+/// follows symbolic refs.
+pub fn reset(oid: &str) {
+    data::update_ref(
+        "HEAD",
+        &data::RefValue {
+            symbolic: false,
+            value: Some(oid.to_owned()),
+        },
+        true,
+    )
+}
+
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
     data::update_ref(
