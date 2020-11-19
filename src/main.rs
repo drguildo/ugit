@@ -59,6 +59,9 @@ fn main() {
                 .arg(Arg::with_name("commit_oid").default_value("@")),
         )
         .subcommand(
+            SubCommand::with_name("show").arg(Arg::with_name("commit_oid").default_value("@")),
+        )
+        .subcommand(
             SubCommand::with_name("checkout")
                 .about(ABOUT_CHECKOUT)
                 .arg(Arg::with_name("commit").required(true)),
@@ -136,6 +139,12 @@ fn main() {
         process::exit(0);
     }
 
+    if let Some(matches) = matches.subcommand_matches("show") {
+        let oid = base::get_oid(matches.value_of("commit_oid").unwrap());
+        show(oid.as_deref());
+        process::exit(0);
+    }
+
     if let Some(matches) = matches.subcommand_matches("checkout") {
         let commit = matches.value_of("commit").unwrap();
         base::checkout(&commit);
@@ -193,6 +202,15 @@ fn main() {
     }
 }
 
+fn print_commit(oid: &str, commit: &ugit::Commit, refs: Option<&Vec<String>>) {
+    let refs_str = match refs {
+        Some(refs) => format!(" ({})", refs.join(", ")),
+        None => "".to_owned(),
+    };
+    println!("commit {}{}", oid, refs_str);
+    println!("{}\n", commit.message);
+}
+
 /// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
 /// same for the parent commit, if it exists.
 fn log(oid: &str) {
@@ -208,12 +226,15 @@ fn log(oid: &str) {
 
     for oid in base::get_commits_and_parents(vec![oid]) {
         let commit = base::get_commit(&oid);
-        let refs_str = match oid_to_ref.get(&oid) {
-            Some(refs) => format!(" ({})", refs.join(", ")),
-            None => "".to_owned(),
-        };
-        println!("commit {}{}", oid, refs_str);
-        println!("{}\n", commit.message);
+        let refs = oid_to_ref.get(&oid);
+        print_commit(&oid, &commit, refs);
+    }
+}
+
+fn show(oid: Option<&str>) {
+    if let Some(oid) = oid {
+        let commit = base::get_commit(oid);
+        print_commit(oid, &commit, None);
     }
 }
 
