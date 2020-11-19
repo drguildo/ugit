@@ -5,7 +5,7 @@ use std::{
     path::{self, Path},
 };
 
-use super::{data, Commit, UGIT_DIR};
+use super::{data, Commit, Tree, UGIT_DIR};
 
 /// Initialise a new repository and create a master branch.
 pub fn init() {
@@ -235,13 +235,13 @@ pub fn read_tree(tree_oid: &str) {
 
 /// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
 /// and their paths.
-fn get_tree(oid: &str, base_path: Option<&str>) -> Vec<(String, ffi::OsString)> {
+fn get_tree(oid: &str, base_path: Option<&str>) -> Tree {
     let tree_object = data::get_object(oid, Some("tree"));
     let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
 
     let base_path = base_path.unwrap_or("");
 
-    let mut result: Vec<(String, ffi::OsString)> = vec![];
+    let mut result: Tree = vec![];
     for line in tree.lines() {
         let split: Vec<&str> = line.split_whitespace().collect();
 

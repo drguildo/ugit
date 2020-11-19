@@ -9,3 +9,5 @@ pub struct Commit {
     pub parent: Option<String>,
     pub message: String,
 }
+
+type Tree = Vec<(String, std::ffi::OsString)>;
