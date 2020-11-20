@@ -22,6 +22,7 @@ fn main() {
     const ABOUT_CHECKOUT: &str =
         "Restore the working tree to that of the commit with the specified OID";
     const ABOUT_TAG: &str = "Create a reference with the specified name";
+    const ABOUT_BRANCH: &str = "List the available branches, or create a new one";
 
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
@@ -75,6 +76,7 @@ fn main() {
         .subcommand(SubCommand::with_name("k"))
         .subcommand(
             SubCommand::with_name("branch")
+                .about(ABOUT_BRANCH)
                 .arg(Arg::with_name("name"))
                 .arg(Arg::with_name("start_point").default_value("@")),
         )
