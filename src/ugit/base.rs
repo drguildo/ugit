@@ -217,7 +217,7 @@ pub fn read_tree(tree_oid: &str) {
     let current_dir = env::current_dir().expect("Failed to get current directory");
     empty_directory(&current_dir);
 
-    let tree = get_tree(tree_oid, None);
+    let tree = get_tree(Some(tree_oid), None);
     for (oid, path) in tree {
         let directories = Path::new(&path)
             .parent()
@@ -235,42 +235,46 @@ pub fn read_tree(tree_oid: &str) {
 
 /// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
 /// and their paths.
-fn get_tree(oid: &str, base_path: Option<&str>) -> Tree {
-    let tree_object = data::get_object(oid, Some("tree"));
-    let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
+pub fn get_tree(oid: Option<&str>, base_path: Option<&str>) -> Tree {
+    if let Some(oid) = oid {
+        let tree_object = data::get_object(oid, Some("tree"));
+        let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
 
-    let base_path = base_path.unwrap_or("");
+        let base_path = base_path.unwrap_or("");
 
-    let mut result: Tree = vec![];
-    for line in tree.lines() {
-        let split: Vec<&str> = line.split_whitespace().collect();
+        let mut result: Tree = vec![];
+        for line in tree.lines() {
+            let split: Vec<&str> = line.split_whitespace().collect();
 
-        let object_type = split
-            .get(0)
-            .expect("Failed to get object type from tree object");
-        let oid = split.get(1).expect("Failed to get OID from tree object");
-        let relative_path = split.get(2).expect("Failed to get path from tree object");
+            let object_type = split
+                .get(0)
+                .expect("Failed to get object type from tree object");
+            let oid = split.get(1).expect("Failed to get OID from tree object");
+            let relative_path = split.get(2).expect("Failed to get path from tree object");
 
-        let mut path = path::PathBuf::new();
-        path.push(base_path);
-        path.push(relative_path);
+            let mut path = path::PathBuf::new();
+            path.push(base_path);
+            path.push(relative_path);
 
-        assert!(!is_illegal(&path));
+            assert!(!is_illegal(&path));
 
-        match *object_type {
-            "blob" => {
-                result.push((oid.to_string(), path.into_os_string()));
-            }
-            "tree" => {
-                let subtree = get_tree(oid, path.to_str());
-                for subtree_object in subtree {
-                    result.push(subtree_object);
+            match *object_type {
+                "blob" => {
+                    result.push((oid.to_string(), path.into_os_string()));
                 }
+                "tree" => {
+                    let subtree = get_tree(Some(oid), path.to_str());
+                    for subtree_object in subtree {
+                        result.push(subtree_object);
+                    }
+                }
+                _ => panic!(format!("Unrecognised object type: {}", *object_type)),
             }
-            _ => panic!(format!("Unrecognised object type: {}", *object_type)),
         }
+        result
+    } else {
+        vec![]
     }
-    result
 }
 
 pub fn checkout(name: &str) {

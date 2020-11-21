@@ -1,5 +1,6 @@
 pub mod base;
 pub mod data;
+pub mod diff;
 
 pub const UGIT_DIR: &str = ".ugit";
 

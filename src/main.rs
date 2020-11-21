@@ -8,7 +8,7 @@ use std::{
 use clap::{App, Arg, SubCommand};
 
 mod ugit;
-use ugit::{base, data};
+use ugit::{base, data, diff};
 
 fn main() {
     const ABOUT_INIT: &str = "Create a new ugit repository";
@@ -238,6 +238,18 @@ fn show(oid: Option<&str>) {
     if let Some(oid) = oid {
         let commit = base::get_commit(oid);
         print_commit(oid, &commit, None);
+
+        let parent_tree = if let Some(parent_oid) = commit.parent {
+            let parent_commit = base::get_commit(parent_oid.as_str());
+            Some(parent_commit.tree)
+        } else {
+            None
+        };
+        let result = diff::diff_trees(
+            &base::get_tree(parent_tree.as_deref(), None),
+            &base::get_tree(Some(commit.tree.as_str()), None),
+        );
+        println!("{}", result)
     }
 }
 
