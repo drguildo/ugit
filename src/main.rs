@@ -23,6 +23,7 @@ fn main() {
         "Restore the working tree to that of the commit with the specified OID";
     const ABOUT_TAG: &str = "Create a reference with the specified name";
     const ABOUT_BRANCH: &str = "List the available branches, or create a new one";
+    const ABOUT_STATUS: &str = "Print the currently checked out branch";
 
     let matches = App::new(clap::crate_name!())
         .about(clap::crate_description!())
@@ -80,7 +81,7 @@ fn main() {
                 .arg(Arg::with_name("name"))
                 .arg(Arg::with_name("start_point").default_value("@")),
         )
-        .subcommand(SubCommand::with_name("status"))
+        .subcommand(SubCommand::with_name("status").about(ABOUT_STATUS))
         .subcommand(SubCommand::with_name("reset").arg(Arg::with_name("oid").required(true)))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
