@@ -174,7 +174,7 @@ fn main() {
                 println!(
                     "Branch {} created at {}",
                     name,
-                    start_point.chars().take(10).collect::<String>()
+                    shorten_oid(start_point.as_str())
                 );
             }
         } else {
@@ -281,7 +281,7 @@ fn k() {
             format!(
                 "\"{}\" [shape=box style=filled label=\"{}\"]\n",
                 oid,
-                oid.chars().take(10).collect::<String>()
+                shorten_oid(oid.as_str())
             )
             .as_str(),
         );
@@ -300,10 +300,7 @@ fn status() {
     if let Some(branch_name) = base::get_branch_name() {
         println!("On branch {}", branch_name);
     } else {
-        println!(
-            "HEAD detached at {}",
-            head.chars().take(10).collect::<String>()
-        );
+        println!("HEAD detached at {}", shorten_oid(head.as_str()));
     }
 }
 
@@ -313,4 +310,8 @@ fn exit_if_not_repository() {
         eprintln!("Not a ugit repository.");
         process::exit(1);
     }
+}
+
+fn shorten_oid(oid: &str) -> String {
+    oid.chars().take(10).collect::<String>()
 }
