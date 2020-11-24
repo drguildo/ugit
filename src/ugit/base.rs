@@ -49,8 +49,7 @@ pub fn get_oid(mut name: &str) -> Option<String> {
     panic!(format!("Unknown name {}", name));
 }
 
-/// Set HEAD to the specified OID. This differs from checkout in that it
-/// follows symbolic refs.
+/// Set HEAD to the specified OID. This differs from checkout in that it follows symbolic refs.
 pub fn reset(oid: &str) {
     data::update_ref(
         "HEAD",
