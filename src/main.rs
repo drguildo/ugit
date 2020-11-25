@@ -83,6 +83,7 @@ fn main() {
         )
         .subcommand(SubCommand::with_name("status").about(ABOUT_STATUS))
         .subcommand(SubCommand::with_name("reset").arg(Arg::with_name("oid").required(true)))
+        .subcommand(SubCommand::with_name("diff").arg(Arg::with_name("commit").default_value("@")))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -203,6 +204,12 @@ fn main() {
         }
         process::exit(0);
     }
+
+    if let Some(matches) = matches.subcommand_matches("diff") {
+        let oid = base::get_oid(matches.value_of("commit").unwrap()).expect("Failed to get OID");
+        diff(&oid);
+        process::exit(0);
+    }
 }
 
 fn print_commit(oid: &str, commit: &ugit::Commit, refs: Option<&Vec<String>>) {
@@ -302,6 +309,14 @@ fn status() {
     } else {
         println!("HEAD detached at {}", shorten_oid(head.as_str()));
     }
+}
+
+fn diff(commit: &str) {
+    let tree_commit = base::get_commit(commit);
+    let tree = base::get_tree(Some(&tree_commit.tree), None);
+    let working_tree = base::get_working_tree();
+    let result = diff::diff_trees(&tree, &working_tree);
+    println!("{}", result);
 }
 
 fn exit_if_not_repository() {

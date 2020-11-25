@@ -276,6 +276,26 @@ pub fn get_tree(oid: Option<&str>, base_path: Option<&str>) -> Tree {
     }
 }
 
+/// Store the contents of the current directory in the object store and return a corresponding Tree.
+pub fn get_working_tree() -> Tree {
+    let mut result = vec![];
+    for entry in walkdir::WalkDir::new(".") {
+        let entry = entry.expect("Failed to read directory entry");
+        let path = entry
+            .into_path()
+            .components()
+            .skip(1) // Skip the "." part of the path.
+            .collect::<path::PathBuf>();
+        if is_ignored(&path) || !path.is_file() {
+            continue;
+        }
+        let contents = std::fs::read(&path).expect("Failed to read file contents");
+        let oid = data::hash_object(&contents, "blob");
+        result.push((oid.to_string(), path.into_os_string()));
+    }
+    result
+}
+
 pub fn checkout(name: &str) {
     let oid = get_oid(name).unwrap();
     let commit = get_commit(&oid);
