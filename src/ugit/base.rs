@@ -373,8 +373,7 @@ fn empty_directory(dir_path: &Path) {
         let path = entry.expect("Failed to read directory entry").path();
         if path.is_dir() {
             if !is_ignored(&path) {
-                empty_directory(&path);
-                fs::remove_dir(path).expect("Failed to remove directory");
+                fs::remove_dir_all(path).expect("Failed to remove directory");
             }
         } else if path.is_file() {
             fs::remove_file(path).expect("Failed to remove file");
