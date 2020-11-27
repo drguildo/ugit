@@ -309,6 +309,15 @@ fn status() {
     } else {
         println!("HEAD detached at {}", shorten_oid(head.as_str()));
     }
+
+    println!("\nChanges to be committed:\n");
+    let head_tree = base::get_commit(&head).tree;
+    for (path, action) in diff::get_changed_files(
+        &base::get_tree(Some(&head_tree), None),
+        &base::get_working_tree(),
+    ) {
+        println!("{:>12}: {}", action, path.to_str().unwrap());
+    }
 }
 
 fn diff(commit: &str) {

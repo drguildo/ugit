@@ -55,6 +55,27 @@ fn compare_trees(trees: &[&Tree]) -> HashMap<OsString, Vec<Option<String>>> {
     entries
 }
 
+pub fn get_changed_files(t_from: &Tree, t_to: &Tree) -> Vec<(OsString, &'static str)> {
+    let mut result = vec![];
+
+    for (path, oids) in compare_trees(&vec![t_from, t_to]) {
+        let o_from = &oids[0];
+        let o_to = &oids[1];
+        if o_from != o_to {
+            let action = if o_from.is_none() {
+                "new file"
+            } else if o_to.is_none() {
+                "deleted"
+            } else {
+                "modified"
+            };
+            result.push((path, action));
+        }
+    }
+
+    result
+}
+
 pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
     let mut output = String::new();
     for (path, oids) in compare_trees(&vec![t_from, t_to]) {
