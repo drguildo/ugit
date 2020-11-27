@@ -1,6 +1,7 @@
 use std::{fmt::Write as _, fs, io::Write as _, path::Path, path::PathBuf};
 
 use sha1::{Digest, Sha1};
+use walkdir::WalkDir;
 
 use super::UGIT_DIR;
 
@@ -130,15 +131,11 @@ pub fn get_refs(prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
 fn find_ref_names(path: &Path) -> Vec<String> {
     let mut ref_names: Vec<String> = vec![];
 
-    if let Ok(dir) = std::fs::read_dir(path) {
-        for dir_entry in dir {
-            let dir_entry_path = dir_entry.unwrap().path();
-            if dir_entry_path.is_file() {
-                let ref_name = path_to_ref_name(&dir_entry_path);
+    for entry in WalkDir::new(path) {
+        if let Ok(entry) = entry {
+            if entry.path().is_file() {
+                let ref_name = path_to_ref_name(entry.path());
                 ref_names.push(ref_name);
-            } else if dir_entry_path.is_dir() {
-                let mut subdir_ref_names = find_ref_names(&dir_entry_path);
-                ref_names.append(subdir_ref_names.as_mut());
             }
         }
     }
