@@ -103,7 +103,9 @@ fn main() {
         io::stdout()
             .write_all(object_hash.as_bytes())
             .expect("Failed to output object ID");
-        io::stdout().write(b"\n").expect("Failed to output newline");
+        io::stdout()
+            .write_all(b"\n")
+            .expect("Failed to output newline");
         process::exit(0);
     }
 
