@@ -26,7 +26,7 @@ pub fn get_oid(mut name: &str) -> Option<String> {
     }
 
     let refs_to_try: Vec<String> = vec![
-        format!("{}", name),
+        name.to_string(),
         format!("refs/{}", name),
         format!("refs/tags/{}", name),
         format!("refs/heads/{}", name),
