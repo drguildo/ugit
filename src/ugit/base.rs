@@ -61,6 +61,8 @@ pub fn reset(oid: &str) {
     )
 }
 
+pub fn merge(other: &str) {}
+
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
     data::update_ref(
