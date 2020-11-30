@@ -96,7 +96,7 @@ pub fn get_branch_name() -> Option<String> {
     assert!(head_ref.starts_with("refs/heads/"));
     // The original Python code uses os.path.relpath. Is there any problem with just doing a string
     // replacement?
-    return Some(head_ref.replacen("refs/heads/", "", 1));
+    Some(head_ref.replacen("refs/heads/", "", 1))
 }
 
 pub fn get_branch_names() -> Vec<String> {
