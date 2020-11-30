@@ -136,7 +136,7 @@ pub fn commit(message: &str) -> Option<String> {
         },
         true,
     );
-    Some(commit_oid.to_owned())
+    Some(commit_oid)
 }
 
 pub fn get_commit(oid: &str) -> Commit {
