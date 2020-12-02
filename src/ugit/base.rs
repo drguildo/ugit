@@ -144,8 +144,8 @@ pub fn get_commit(oid: &str) -> Commit {
     let commit = String::from_utf8(commit_data).expect("Commit contains invalid data");
     let mut commit_lines = commit.lines();
 
-    let mut tree_oid: Option<&str> = None;
-    let mut parent_oid: Option<&str> = None;
+    let mut tree_oid: Option<String> = None;
+    let mut parent_oids: Vec<String> = Vec::new();
 
     for line in commit_lines.by_ref().take_while(|l| *l != "") {
         let mut split_line = line.split_whitespace();
@@ -154,8 +154,12 @@ pub fn get_commit(oid: &str) -> Commit {
             .expect("Failed to retrieve key from commit header");
         let oid = split_line.next();
         match key {
-            "tree" => tree_oid = oid,
-            "parent" => parent_oid = oid,
+            "tree" => tree_oid = oid.map(ToOwned::to_owned),
+            "parent" => {
+                if let Some(oid) = oid {
+                    parent_oids.push(oid.to_string())
+                }
+            }
             _ => panic!("Unrecognised commit header type"),
         }
     }
@@ -164,8 +168,8 @@ pub fn get_commit(oid: &str) -> Commit {
 
     if let Some(tree_oid) = tree_oid {
         Commit {
-            tree: tree_oid.to_string(),
-            parent: parent_oid.map(ToOwned::to_owned),
+            tree: tree_oid,
+            parents: parent_oids,
             message,
         }
     } else {
@@ -339,7 +343,7 @@ pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
 
         oids.push(oid.clone());
 
-        if let Some(parent_oid) = commit.parent {
+        for parent_oid in commit.parents {
             oids_to_visit.push_back(parent_oid);
         }
     }

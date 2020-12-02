@@ -255,8 +255,8 @@ fn show(oid: Option<&str>) {
         let commit = base::get_commit(oid);
         print_commit(oid, &commit, None);
 
-        let parent_tree = if let Some(parent_oid) = commit.parent {
-            let parent_commit = base::get_commit(parent_oid.as_str());
+        let parent_tree = if let Some(parent_oid) = commit.parents.first() {
+            let parent_commit = base::get_commit(parent_oid);
             Some(parent_commit.tree)
         } else {
             None
@@ -301,7 +301,7 @@ fn k() {
             )
             .as_str(),
         );
-        if let Some(parent_oid) = commit.parent {
+        if let Some(parent_oid) = commit.parents.first() {
             dot.push_str(format!("\"{}\" -> \"{}\"\n", oid, parent_oid).as_str());
         }
     }
