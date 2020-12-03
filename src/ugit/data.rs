@@ -107,6 +107,13 @@ fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
     return (reference, RefValue { symbolic, value });
 }
 
+pub fn delete_ref(reference: &str, deref: bool) {
+    let reference = get_ref_internal(reference, deref).0;
+    let mut ref_path = PathBuf::from(UGIT_DIR);
+    ref_path.push(reference);
+    fs::remove_file(ref_path).expect("Failed to delete ref");
+}
+
 pub fn get_refs(prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
     let mut refs_path = PathBuf::from(UGIT_DIR);
     refs_path.push("refs");
