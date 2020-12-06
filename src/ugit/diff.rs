@@ -89,3 +89,39 @@ pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
     }
     output
 }
+
+pub fn merge_trees(t_head: &Tree, t_other: &Tree) -> HashMap<OsString, String> {
+    let mut tree = HashMap::new();
+    for (path, oids) in compare_trees(&vec![t_head, t_other]) {
+        let o_head = &oids[0];
+        let o_other = &oids[1];
+        tree.insert(path, merge_blobs(o_head.as_deref(), o_other.as_deref()));
+    }
+    tree
+}
+
+fn merge_blobs(head_oid: Option<&str>, other_oid: Option<&str>) -> String {
+    let f_head = NamedTempFile::new().expect("Failed to create temp file");
+    let f_other = NamedTempFile::new().expect("Failed to create temp file");
+
+    if let Some(oid) = head_oid {
+        std::fs::write(&f_head, data::get_object(oid, Some("blob"))).expect("Failed to write blob");
+    }
+
+    if let Some(oid) = other_oid {
+        std::fs::write(&f_other, data::get_object(oid, Some("blob")))
+            .expect("Failed to write blob");
+    }
+
+    let mut diff_command = Command::new("diff");
+    diff_command
+        .arg("-DHEAD")
+        .arg(f_head.path().to_str().unwrap())
+        .arg(f_other.path().to_str().unwrap());
+
+    let diff_output = diff_command.output().unwrap();
+    let diff_string =
+        std::str::from_utf8(&diff_output.stdout).expect("Failed to convert diff output to string");
+
+    diff_string.to_owned()
+}

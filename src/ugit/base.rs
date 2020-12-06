@@ -5,7 +5,7 @@ use std::{
     path::{self, Path},
 };
 
-use super::{data, Commit, Tree, UGIT_DIR};
+use super::{data, diff, Commit, Tree, UGIT_DIR};
 
 /// Initialise a new repository and create a master branch.
 pub fn init() {
@@ -61,7 +61,15 @@ pub fn reset(oid: &str) {
     )
 }
 
-pub fn merge(other: &str) {}
+pub fn merge(other: &str) {
+    let head = data::get_ref("HEAD", true).value;
+    let head_commit = get_commit(&head.expect("Failed to get HEAD OID"));
+
+    let other_commit = get_commit(other);
+
+    read_tree_merged(&head_commit.tree, &other_commit.tree);
+    println!("Merged in working tree");
+}
 
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
@@ -235,6 +243,20 @@ pub fn read_tree(tree_oid: &str) {
 
         let contents = data::get_object(oid.as_str(), None);
         std::fs::write(path, contents).expect("Failed to write file contents");
+    }
+}
+
+fn read_tree_merged(head: &str, other: &str) {
+    let current_dir = env::current_dir().expect("Failed to get current directory");
+
+    empty_directory(&current_dir);
+
+    let head_tree = get_tree(Some(head), None);
+    let other_tree = get_tree(Some(other), None);
+    for (path, blob) in diff::merge_trees(&head_tree, &other_tree) {
+        let path = path::PathBuf::from(path);
+        fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directory");
+        fs::write(path, blob).expect("Failed to write blob");
     }
 }
 
