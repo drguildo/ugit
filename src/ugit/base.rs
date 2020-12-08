@@ -61,12 +61,14 @@ pub fn reset(oid: &str) {
     )
 }
 
+/// Merge the trees referenced by the HEAD (ref) and `other` (OID) commits.
 pub fn merge(other: &str) {
     let head = data::get_ref("HEAD", true).value;
     let head_commit = get_commit(&head.expect("Failed to get HEAD OID"));
 
     let other_commit = get_commit(other);
 
+    // Create a MERGE_HEAD ref for use when setting the parent commits of the merge commit.
     data::update_ref(
         "MERGE_HEAD",
         &data::RefValue {
