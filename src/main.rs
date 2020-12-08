@@ -319,6 +319,10 @@ fn status() {
         println!("HEAD detached at {}", shorten_oid(head.as_str()));
     }
 
+    if let Some(merge_head) = data::get_ref("MERGE_HEAD", true).value {
+        println!("Merging with {}", shorten_oid(&merge_head));
+    }
+
     println!("\nChanges to be committed:\n");
     let head_tree = base::get_commit(&head).tree;
     for (path, action) in diff::get_changed_files(

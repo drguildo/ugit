@@ -67,8 +67,17 @@ pub fn merge(other: &str) {
 
     let other_commit = get_commit(other);
 
+    data::update_ref(
+        "MERGE_HEAD",
+        &data::RefValue {
+            symbolic: false,
+            value: Some(other.to_owned()),
+        },
+        true,
+    );
+
     read_tree_merged(&head_commit.tree, &other_commit.tree);
-    println!("Merged in working tree");
+    println!("Merged in working tree\nPlease commit");
 }
 
 pub fn create_tag(name: &str, oid: &str) {
@@ -131,6 +140,10 @@ pub fn commit(message: &str) -> Option<String> {
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
     if let Some(head) = data::get_ref("HEAD", true).value {
         commit.push_str(format!("parent {}\n", head).as_str());
+    }
+    if let Some(merge_head) = data::get_ref("MERGE_HEAD", true).value {
+        commit.push_str(format!("parent {}\n", merge_head).as_str());
+        data::delete_ref("MERGE_HEAD", false);
     }
     commit.push_str("\n");
     commit.push_str(message);
