@@ -120,6 +120,7 @@ pub fn get_refs(prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
 
     let mut ref_names = find_ref_names(&refs_path);
     ref_names.push("HEAD".to_string());
+    ref_names.push("MERGE_HEAD".to_string());
 
     let mut refs_to_values: Vec<(String, RefValue)> = vec![];
     for ref_name in ref_names {
@@ -129,7 +130,11 @@ pub fn get_refs(prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
             }
         }
         let ref_value = get_ref(&ref_name, deref);
-        refs_to_values.push((ref_name, ref_value));
+        if ref_value.value.is_some() {
+            // This is mainly to handle MERGE_HEAD which will only exist if we're in the middle of a
+            // merge.
+            refs_to_values.push((ref_name, ref_value));
+        }
     }
 
     refs_to_values
