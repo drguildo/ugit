@@ -100,15 +100,15 @@ pub fn merge_trees(t_head: &Tree, t_other: &Tree) -> HashMap<OsString, String> {
     tree
 }
 
-fn merge_blobs(head_oid: Option<&str>, other_oid: Option<&str>) -> String {
+fn merge_blobs(o_head: Option<&str>, o_other: Option<&str>) -> String {
     let f_head = NamedTempFile::new().expect("Failed to create temp file");
     let f_other = NamedTempFile::new().expect("Failed to create temp file");
 
-    if let Some(oid) = head_oid {
+    if let Some(oid) = o_head {
         std::fs::write(&f_head, data::get_object(oid, Some("blob"))).expect("Failed to write blob");
     }
 
-    if let Some(oid) = other_oid {
+    if let Some(oid) = o_other {
         std::fs::write(&f_other, data::get_object(oid, Some("blob")))
             .expect("Failed to write blob");
     }
