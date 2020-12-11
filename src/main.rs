@@ -85,6 +85,11 @@ fn main() {
         .subcommand(SubCommand::with_name("reset").arg(Arg::with_name("oid").required(true)))
         .subcommand(SubCommand::with_name("diff").arg(Arg::with_name("commit").default_value("@")))
         .subcommand(SubCommand::with_name("merge").arg(Arg::with_name("commit").default_value("@")))
+        .subcommand(
+            SubCommand::with_name("merge-base")
+                .arg(Arg::with_name("commit1").required(true))
+                .arg(Arg::with_name("commit2").required(true)),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -218,6 +223,17 @@ fn main() {
         let oid = base::get_oid(matches.value_of("commit").unwrap()).expect("Failed to get OID");
         merge(&oid);
         process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("merge-base") {
+        let commit1 =
+            base::get_oid(matches.value_of("commit1").unwrap()).expect("Failed to get OID");
+        let commit2 =
+            base::get_oid(matches.value_of("commit2").unwrap()).expect("Failed to get OID");
+
+        let common_ancestor = base::get_merge_base(&commit1, &commit2);
+
+        println!("{}", common_ancestor.unwrap_or("none".to_owned()));
     }
 }
 

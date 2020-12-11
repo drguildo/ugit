@@ -82,6 +82,20 @@ pub fn merge(other: &str) {
     println!("Merged in working tree\nPlease commit");
 }
 
+/// Find the common ancestor of the specified OIDs.
+pub fn get_merge_base(oid1: &str, oid2: &str) -> Option<String> {
+    use std::iter::FromIterator;
+
+    let parents1 = HashSet::<String>::from_iter(get_commits_and_parents(vec![oid1]));
+    for oid in get_commits_and_parents(vec![oid2]) {
+        if parents1.contains(&oid) {
+            return Some(oid.to_owned());
+        }
+    }
+
+    None
+}
+
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
     data::update_ref(
