@@ -63,9 +63,14 @@ pub fn reset(oid: &str) {
 
 /// Merge the trees referenced by the HEAD (ref) and `other` (OID) commits.
 pub fn merge(other: &str) {
-    let head = data::get_ref("HEAD", true).value;
-    let head_commit = get_commit(&head.expect("Failed to get HEAD OID"));
+    let head = data::get_ref("HEAD", true)
+        .value
+        .expect("Failed to get HEAD OID");
 
+    let merge_base = get_merge_base(other, &head).expect("Failed to get merge base");
+
+    let base_commit = get_commit(&merge_base);
+    let head_commit = get_commit(&head);
     let other_commit = get_commit(other);
 
     // Create a MERGE_HEAD ref for use when setting the parent commits of the merge commit.
@@ -78,7 +83,7 @@ pub fn merge(other: &str) {
         true,
     );
 
-    read_tree_merged(&head_commit.tree, &other_commit.tree);
+    read_tree_merged(&base_commit.tree, &head_commit.tree, &other_commit.tree);
     println!("Merged in working tree\nPlease commit");
 }
 
@@ -93,6 +98,9 @@ pub fn get_merge_base(oid1: &str, oid2: &str) -> Option<String> {
         }
     }
 
+    // XXX: This should probably panic instead of returning an Option as
+    // every commit should have a common ancestory, even if it's the
+    // initial commit.
     None
 }
 
@@ -275,14 +283,15 @@ pub fn read_tree(tree_oid: &str) {
     }
 }
 
-fn read_tree_merged(head: &str, other: &str) {
+fn read_tree_merged(base: &str, head: &str, other: &str) {
     let current_dir = env::current_dir().expect("Failed to get current directory");
 
     empty_directory(&current_dir);
 
+    let base_tree = get_tree(Some(base), None);
     let head_tree = get_tree(Some(head), None);
     let other_tree = get_tree(Some(other), None);
-    for (path, blob) in diff::merge_trees(&head_tree, &other_tree) {
+    for (path, blob) in diff::merge_trees(&base_tree, &head_tree, &other_tree) {
         let path = path::PathBuf::from(path);
         fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directory");
         fs::write(path, blob).expect("Failed to write blob");

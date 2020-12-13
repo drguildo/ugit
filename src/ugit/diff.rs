@@ -90,19 +90,28 @@ pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
     output
 }
 
-pub fn merge_trees(t_head: &Tree, t_other: &Tree) -> HashMap<OsString, String> {
+pub fn merge_trees(t_base: &Tree, t_head: &Tree, t_other: &Tree) -> HashMap<OsString, String> {
     let mut tree = HashMap::new();
-    for (path, oids) in compare_trees(&vec![t_head, t_other]) {
-        let o_head = &oids[0];
-        let o_other = &oids[1];
-        tree.insert(path, merge_blobs(o_head.as_deref(), o_other.as_deref()));
+    for (path, oids) in compare_trees(&vec![t_base, t_head, t_other]) {
+        let o_base = &oids[0];
+        let o_head = &oids[1];
+        let o_other = &oids[2];
+        tree.insert(
+            path,
+            merge_blobs(o_base.as_deref(), o_head.as_deref(), o_other.as_deref()),
+        );
     }
     tree
 }
 
-fn merge_blobs(o_head: Option<&str>, o_other: Option<&str>) -> String {
+fn merge_blobs(o_base: Option<&str>, o_head: Option<&str>, o_other: Option<&str>) -> String {
+    let f_base = NamedTempFile::new().expect("Failed to create temp file");
     let f_head = NamedTempFile::new().expect("Failed to create temp file");
     let f_other = NamedTempFile::new().expect("Failed to create temp file");
+
+    if let Some(oid) = o_base {
+        std::fs::write(&f_base, data::get_object(oid, Some("blob"))).expect("Failed to write blob");
+    }
 
     if let Some(oid) = o_head {
         std::fs::write(&f_head, data::get_object(oid, Some("blob"))).expect("Failed to write blob");
@@ -113,13 +122,25 @@ fn merge_blobs(o_head: Option<&str>, o_other: Option<&str>) -> String {
             .expect("Failed to write blob");
     }
 
-    let mut diff_command = Command::new("diff");
+    let mut diff_command = Command::new("diff3");
     diff_command
-        .arg("-DHEAD")
+        .arg("-m")
+        .arg("-L")
+        .arg("HEAD")
         .arg(f_head.path().to_str().unwrap())
+        .arg("-L")
+        .arg("BASE")
+        .arg(f_base.path().to_str().unwrap())
+        .arg("-L")
+        .arg("MERGE_HEAD")
         .arg(f_other.path().to_str().unwrap());
 
     let diff_output = diff_command.output().unwrap();
+    if let Some(return_code) = diff_output.status.code() {
+        // 0: success
+        // 1: conflicts
+        assert!(return_code == 0 || return_code == 1);
+    }
     let diff_string =
         std::str::from_utf8(&diff_output.stdout).expect("Failed to convert diff output to string");
 
