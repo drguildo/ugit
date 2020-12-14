@@ -69,9 +69,22 @@ pub fn merge(other: &str) {
 
     let merge_base = get_merge_base(other, &head).expect("Failed to get merge base");
 
-    let base_commit = get_commit(&merge_base);
-    let head_commit = get_commit(&head);
     let other_commit = get_commit(other);
+
+    // Handle fast-forward merge.
+    if merge_base == head {
+        read_tree(&other_commit.tree);
+        data::update_ref(
+            "HEAD",
+            &data::RefValue {
+                symbolic: false,
+                value: Some(other.to_owned()),
+            },
+            true,
+        );
+        println!("Fast-forward merge, no need to commit");
+        return;
+    }
 
     // Create a MERGE_HEAD ref for use when setting the parent commits of the merge commit.
     data::update_ref(
@@ -82,6 +95,9 @@ pub fn merge(other: &str) {
         },
         true,
     );
+
+    let base_commit = get_commit(&merge_base);
+    let head_commit = get_commit(&head);
 
     read_tree_merged(&base_commit.tree, &head_commit.tree, &other_commit.tree);
     println!("Merged in working tree\nPlease commit");
