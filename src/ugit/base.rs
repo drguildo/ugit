@@ -5,7 +5,9 @@ use std::{
     path::{self, Path},
 };
 
-use super::{data, diff, Commit, Tree, UGIT_DIR};
+use path::PathBuf;
+
+use super::{data, diff, Commit, Tree, DEFAULT_REPO};
 
 /// Initialise a new repository and create a master branch.
 pub fn init() {
@@ -158,7 +160,9 @@ pub fn get_branch_name() -> Option<String> {
 
 pub fn get_branch_names() -> Vec<String> {
     let mut branch_names = vec![];
-    for (ref_name, _ref_value) in data::get_refs(Some("refs/heads/"), true) {
+    for (ref_name, _ref_value) in
+        data::get_refs(&PathBuf::from(DEFAULT_REPO), Some("refs/heads/"), true)
+    {
         branch_names.push(ref_name.replace("refs/heads/", ""));
     }
     branch_names
@@ -431,14 +435,14 @@ pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
 /// check whether the .ugit directory at least contains an objects sub-directory.
 pub fn is_ugit_repository(path: &Path) -> bool {
     let mut ugit_data_dir = path.to_owned();
-    ugit_data_dir.push(UGIT_DIR);
+    ugit_data_dir.push(DEFAULT_REPO);
     ugit_data_dir.is_dir()
 }
 
 /// Whether or not the specified path should not be added to the object store.
 fn is_ignored(path: &Path) -> bool {
     path.components()
-        .any(|c| c == Component::Normal(UGIT_DIR.as_ref()))
+        .any(|c| c == Component::Normal(DEFAULT_REPO.as_ref()))
 }
 
 /// Whether a path contains illegal components.

@@ -2,13 +2,14 @@ use std::{
     collections::HashSet,
     env, fs,
     io::{self, Write},
+    path::PathBuf,
     process,
 };
 
 use clap::{App, Arg, SubCommand};
 
 mod ugit;
-use ugit::{base, data, diff};
+use ugit::{base, data, diff, DEFAULT_REPO};
 
 fn main() {
     const ABOUT_INIT: &str = "Create a new ugit repository";
@@ -90,6 +91,7 @@ fn main() {
                 .arg(Arg::with_name("commit1").required(true))
                 .arg(Arg::with_name("commit2").required(true)),
         )
+        .subcommand(SubCommand::with_name("fetch").arg(Arg::with_name("remote").required(true)))
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -235,6 +237,11 @@ fn main() {
 
         println!("{}", common_ancestor.unwrap_or("none".to_owned()));
     }
+
+    if let Some(matches) = matches.subcommand_matches("fetch") {
+        let remote = matches.value_of("remote").unwrap();
+        ugit::remote::fetch(&PathBuf::from(remote));
+    }
 }
 
 fn print_commit(oid: &str, commit: &ugit::Commit, refs: Option<&Vec<String>>) {
@@ -252,7 +259,7 @@ fn log(oid: &str) {
     let mut oid_to_ref: std::collections::HashMap<String, Vec<String>> =
         std::collections::HashMap::new();
 
-    for (ref_name, ref_value) in data::get_refs(None, true) {
+    for (ref_name, ref_value) in data::get_refs(&PathBuf::from(DEFAULT_REPO), None, true) {
         if let Some(value) = ref_value.value {
             let refs = oid_to_ref.entry(value).or_insert(Vec::new());
             refs.push(ref_name);
@@ -290,7 +297,7 @@ fn k() {
     dot.push_str("digraph commits {\n");
 
     let mut ref_oids: HashSet<String> = HashSet::new();
-    for (refname, ref_value) in data::get_refs(None, false) {
+    for (refname, ref_value) in data::get_refs(&PathBuf::from(DEFAULT_REPO), None, false) {
         dot.push_str(format!("\"{}\" [shape=note]\n", refname).as_str());
         dot.push_str(
             format!(

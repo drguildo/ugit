@@ -1,8 +1,9 @@
 pub mod base;
 pub mod data;
 pub mod diff;
+pub mod remote;
 
-pub const UGIT_DIR: &str = ".ugit";
+pub const DEFAULT_REPO: &str = ".ugit";
 
 #[derive(Debug)]
 pub struct Commit {

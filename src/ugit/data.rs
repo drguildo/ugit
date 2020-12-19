@@ -3,7 +3,7 @@ use std::{fmt::Write as _, fs, io::Write as _, path::Path, path::PathBuf};
 use sha1::{Digest, Sha1};
 use walkdir::WalkDir;
 
-use super::UGIT_DIR;
+use super::DEFAULT_REPO;
 
 #[derive(Debug)]
 pub struct RefValue {
@@ -13,7 +13,7 @@ pub struct RefValue {
 
 /// Create a new ugit repository.
 pub fn init() {
-    let mut path = PathBuf::from(UGIT_DIR);
+    let mut path = PathBuf::from(DEFAULT_REPO);
     fs::create_dir(&path).expect("Failed to create .ugit directory");
 
     path.push("objects");
@@ -72,7 +72,7 @@ pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
         value.value.to_owned().unwrap()
     };
 
-    let mut path = PathBuf::from(UGIT_DIR);
+    let mut path = PathBuf::from(DEFAULT_REPO);
     path.push(reference);
     fs::create_dir_all(path.parent().unwrap())
         .expect("Failed to create reference directory structure");
@@ -86,7 +86,7 @@ pub fn get_ref(reference: &str, deref: bool) -> RefValue {
 }
 
 fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
-    let mut ref_path = PathBuf::from(UGIT_DIR);
+    let mut ref_path = PathBuf::from(DEFAULT_REPO);
     ref_path.push(reference);
 
     let mut value: Option<String> = None;
@@ -109,13 +109,13 @@ fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
 
 pub fn delete_ref(reference: &str, deref: bool) {
     let reference = get_ref_internal(reference, deref).0;
-    let mut ref_path = PathBuf::from(UGIT_DIR);
+    let mut ref_path = PathBuf::from(DEFAULT_REPO);
     ref_path.push(reference);
     fs::remove_file(ref_path).expect("Failed to delete ref");
 }
 
-pub fn get_refs(prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
-    let mut refs_path = PathBuf::from(UGIT_DIR);
+pub fn get_refs(repo_path: &Path, prefix: Option<&str>, deref: bool) -> Vec<(String, RefValue)> {
+    let mut refs_path = PathBuf::from(repo_path);
     refs_path.push("refs");
 
     let mut ref_names = find_ref_names(&refs_path);
@@ -146,21 +146,13 @@ fn find_ref_names(path: &Path) -> Vec<String> {
     for entry in WalkDir::new(path) {
         if let Ok(entry) = entry {
             if entry.path().is_file() {
-                let ref_name = path_to_ref_name(entry.path());
-                ref_names.push(ref_name);
+                let ref_name = entry.path().strip_prefix(path.parent().unwrap()).unwrap();
+                ref_names.push(ref_name.as_os_str().to_str().unwrap().to_owned());
             }
         }
     }
 
     ref_names
-}
-
-fn path_to_ref_name(path: &Path) -> String {
-    path.components()
-        .skip(1) // Don't include the ugit directory in the generated name.
-        .map(|c| c.as_os_str().to_str().unwrap())
-        .collect::<Vec<&str>>()
-        .join("/")
 }
 
 /// Generates an OID from a byte vector.
@@ -178,7 +170,7 @@ fn generate_oid(bytes: &[u8]) -> String {
 /// Return the path to an object in the object database.
 fn get_object_path(oid: &str) -> PathBuf {
     let mut path = PathBuf::new();
-    path.push(UGIT_DIR);
+    path.push(DEFAULT_REPO);
     path.push("objects");
     path.push(oid);
     path
