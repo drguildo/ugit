@@ -329,7 +329,7 @@ fn k() {
         }
     }
 
-    dot.push_str("}");
+    dot.push('}');
 
     println!("{}", dot);
 }

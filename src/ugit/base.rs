@@ -189,7 +189,7 @@ pub fn commit(message: &str) -> Option<String> {
         commit.push_str(format!("parent {}\n", merge_head).as_str());
         data::delete_ref("MERGE_HEAD", false);
     }
-    commit.push_str("\n");
+    commit.push('\n');
     commit.push_str(message);
 
     let commit_oid = data::hash_object(&commit.as_bytes().to_vec(), "commit");
