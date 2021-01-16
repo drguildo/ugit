@@ -235,7 +235,7 @@ fn main() {
 
         let common_ancestor = base::get_merge_base(&commit1, &commit2);
 
-        println!("{}", common_ancestor.unwrap_or("none".to_owned()));
+        println!("{}", common_ancestor.unwrap_or_else(|| "none".to_owned()));
     }
 
     if let Some(matches) = matches.subcommand_matches("fetch") {
@@ -303,7 +303,7 @@ fn k() {
             format!(
                 "\"{}\" -> \"{}\"\n",
                 refname,
-                ref_value.value.clone().unwrap_or("None".to_owned())
+                ref_value.value.clone().unwrap_or_else(|| "None".to_owned())
             )
             .as_str(),
         );
