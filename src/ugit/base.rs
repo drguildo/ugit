@@ -112,7 +112,7 @@ pub fn get_merge_base(oid1: &str, oid2: &str) -> Option<String> {
     let parents1 = HashSet::<String>::from_iter(get_commits_and_parents(vec![oid1]));
     for oid in get_commits_and_parents(vec![oid2]) {
         if parents1.contains(&oid) {
-            return Some(oid.to_owned());
+            return Some(oid);
         }
     }
 
