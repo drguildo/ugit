@@ -58,7 +58,7 @@ fn compare_trees(trees: &[&Tree]) -> HashMap<OsString, Vec<Option<String>>> {
 pub fn get_changed_files(t_from: &Tree, t_to: &Tree) -> Vec<(OsString, &'static str)> {
     let mut result = vec![];
 
-    for (path, oids) in compare_trees(&vec![t_from, t_to]) {
+    for (path, oids) in compare_trees(&[t_from, t_to]) {
         let o_from = &oids[0];
         let o_to = &oids[1];
         if o_from != o_to {
@@ -78,7 +78,7 @@ pub fn get_changed_files(t_from: &Tree, t_to: &Tree) -> Vec<(OsString, &'static 
 
 pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
     let mut output = String::new();
-    for (path, oids) in compare_trees(&vec![t_from, t_to]) {
+    for (path, oids) in compare_trees(&[t_from, t_to]) {
         let o_from = &oids[0];
         let o_to = &oids[1];
         if o_from != o_to {
@@ -92,7 +92,7 @@ pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
 
 pub fn merge_trees(t_base: &Tree, t_head: &Tree, t_other: &Tree) -> HashMap<OsString, String> {
     let mut tree = HashMap::new();
-    for (path, oids) in compare_trees(&vec![t_base, t_head, t_other]) {
+    for (path, oids) in compare_trees(&[t_base, t_head, t_other]) {
         let o_base = &oids[0];
         let o_head = &oids[1];
         let o_other = &oids[2];
