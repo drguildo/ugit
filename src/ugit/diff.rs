@@ -47,7 +47,7 @@ fn compare_trees(trees: &[&Tree]) -> HashMap<OsString, Vec<Option<String>>> {
         for (oid, path) in *tree {
             let oids = entries
                 .entry(path.to_owned())
-                .or_insert(vec![None; trees.len()]);
+                .or_insert_with(|| vec![None; trees.len()]);
             oids[i] = Some(oid.clone());
         }
     }

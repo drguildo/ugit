@@ -261,7 +261,7 @@ fn log(oid: &str) {
 
     for (ref_name, ref_value) in data::get_refs(&PathBuf::from(DEFAULT_REPO), None, true) {
         if let Some(value) = ref_value.value {
-            let refs = oid_to_ref.entry(value).or_insert(Vec::new());
+            let refs = oid_to_ref.entry(value).or_insert_with(Vec::new);
             refs.push(ref_name);
         }
     }
