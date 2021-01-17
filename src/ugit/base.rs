@@ -212,7 +212,7 @@ pub fn get_commit(oid: &str) -> Commit {
     let mut tree_oid: Option<String> = None;
     let mut parent_oids: Vec<String> = Vec::new();
 
-    for line in commit_lines.by_ref().take_while(|l| *l != "") {
+    for line in commit_lines.by_ref().take_while(|l| !l.is_empty()) {
         let mut split_line = line.split_whitespace();
         let key = split_line
             .next()
