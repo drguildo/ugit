@@ -2,11 +2,25 @@ use std::{collections::HashMap, path::Path};
 
 use super::{data, DEFAULT_REPO};
 
-pub fn fetch(remote_path: &Path) {
-    println!("Will fetch the following refs:");
+const REMOTE_REFS_BASE: &str = "refs/heads/";
+const LOCAL_REFS_BASE: &str = "refs/remote/";
 
-    for refname in get_remote_refs(remote_path, Some("refs/heads")).keys() {
-        println!("- {}", refname);
+pub fn fetch(remote_path: &Path) {
+    // Get refs from server
+    let refs = get_remote_refs(remote_path, Some(REMOTE_REFS_BASE));
+
+    // Update local refs to match server
+    for (remote_name, value) in refs {
+        let mut refname = String::from(LOCAL_REFS_BASE);
+        refname.push_str(&remote_name.replacen(REMOTE_REFS_BASE, "", 1));
+        data::update_ref(
+            &refname,
+            &data::RefValue {
+                symbolic: false,
+                value,
+            },
+            true,
+        )
     }
 }
 
