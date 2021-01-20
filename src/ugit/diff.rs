@@ -104,6 +104,7 @@ pub fn merge_trees(t_base: &Tree, t_head: &Tree, t_other: &Tree) -> HashMap<OsSt
     tree
 }
 
+/// Use a three-way merge to merge the objects with the specified OIDs using a common base.
 fn merge_blobs(o_base: Option<&str>, o_head: Option<&str>, o_other: Option<&str>) -> String {
     let f_base = NamedTempFile::new().expect("Failed to create temp file");
     let f_head = NamedTempFile::new().expect("Failed to create temp file");
