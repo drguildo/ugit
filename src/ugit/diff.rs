@@ -40,6 +40,9 @@ fn diff_blobs(o_from: Option<&str>, o_to: Option<&str>, path: &str) -> String {
         .to_owned()
 }
 
+/// Returns a map of the paths contained in the specified trees, mapped to a list of the OIDs of
+/// corresponding objects. The list of OIDs is indexed based on which tree the object is contained
+/// in.
 fn compare_trees(trees: &[&Tree]) -> HashMap<OsString, Vec<Option<String>>> {
     let mut entries: HashMap<OsString, Vec<Option<String>>> = HashMap::new();
 
