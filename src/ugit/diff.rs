@@ -58,6 +58,8 @@ fn compare_trees(trees: &[&Tree]) -> HashMap<OsString, Vec<Option<String>>> {
     entries
 }
 
+/// Returns a list of tuples containing all of the paths that differ between the specified trees
+/// along with a status message indicating how they differ.
 pub fn get_changed_files(t_from: &Tree, t_to: &Tree) -> Vec<(OsString, &'static str)> {
     let mut result = vec![];
 
