@@ -318,48 +318,64 @@ fn read_tree_merged(base: &str, head: &str, other: &str) {
     }
 }
 
-/// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
-/// and their paths.
-pub fn get_tree(oid: Option<&str>, base_path: Option<&str>) -> Tree {
+fn get_tree_entries(oid: Option<&str>) -> Vec<(String, String, String)> {
+    let mut tree_entries = vec![];
+
     if let Some(oid) = oid {
         let tree_object = data::get_object(oid, Some("tree"));
         let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
-
-        let base_path = base_path.unwrap_or("");
-
-        let mut result: Tree = vec![];
         for line in tree.lines() {
             let split: Vec<&str> = line.split_whitespace().collect();
 
             let object_type = split
                 .get(0)
-                .expect("Failed to get object type from tree object");
-            let oid = split.get(1).expect("Failed to get OID from tree object");
-            let relative_path = split.get(2).expect("Failed to get path from tree object");
+                .expect("Failed to get object type from tree object")
+                .to_string();
+            let oid = split
+                .get(1)
+                .expect("Failed to get OID from tree object")
+                .to_string();
+            let path = split
+                .get(2)
+                .expect("Failed to get path from tree object")
+                .to_string();
 
-            let mut path = path::PathBuf::new();
-            path.push(base_path);
-            path.push(relative_path);
-
-            assert!(!is_illegal(&path));
-
-            match *object_type {
-                "blob" => {
-                    result.push((oid.to_string(), path.into_os_string()));
-                }
-                "tree" => {
-                    let subtree = get_tree(Some(oid), path.to_str());
-                    for subtree_object in subtree {
-                        result.push(subtree_object);
-                    }
-                }
-                _ => panic!(format!("Unrecognised object type: {}", *object_type)),
-            }
+            tree_entries.push((object_type, oid, path));
         }
-        result
-    } else {
-        vec![]
     }
+
+    tree_entries
+}
+
+/// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
+/// and their paths.
+pub fn get_tree(oid: Option<&str>, base_path: Option<&str>) -> Tree {
+    let base_path = base_path.unwrap_or("");
+
+    let mut result: Tree = vec![];
+
+    for (object_type, oid, relative_path) in get_tree_entries(oid) {
+        let mut path = path::PathBuf::new();
+        path.push(base_path);
+        path.push(relative_path);
+
+        assert!(!is_illegal(&path));
+
+        match object_type.as_ref() {
+            "blob" => {
+                result.push((oid.to_string(), path.into_os_string()));
+            }
+            "tree" => {
+                let subtree = get_tree(Some(&oid), path.to_str());
+                for subtree_object in subtree {
+                    result.push(subtree_object);
+                }
+            }
+            _ => panic!(format!("Unrecognised object type: {}", object_type)),
+        }
+    }
+
+    result
 }
 
 /// Store the contents of the current directory in the object store and return a corresponding Tree.
