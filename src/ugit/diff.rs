@@ -81,6 +81,7 @@ pub fn get_changed_files(t_from: &Tree, t_to: &Tree) -> Vec<(OsString, &'static 
     result
 }
 
+/// Generates a diff of the files contained in the specified trees.
 pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
     let mut output = String::new();
     for (path, oids) in compare_trees(&[t_from, t_to]) {
@@ -95,6 +96,7 @@ pub fn diff_trees(t_from: &Tree, t_to: &Tree) -> String {
     output
 }
 
+/// Merges the files contained in the specified trees.
 pub fn merge_trees(t_base: &Tree, t_head: &Tree, t_other: &Tree) -> HashMap<OsString, String> {
     let mut tree = HashMap::new();
     for (path, oids) in compare_trees(&[t_base, t_head, t_other]) {
