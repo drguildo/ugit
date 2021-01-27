@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::Path};
 
-use super::{data, DEFAULT_REPO};
+use super::{base, data, DEFAULT_REPO};
 
 const REMOTE_REFS_BASE: &str = "refs/heads/";
 const LOCAL_REFS_BASE: &str = "refs/remote/";
@@ -8,6 +8,16 @@ const LOCAL_REFS_BASE: &str = "refs/remote/";
 pub fn fetch(remote_path: &Path) {
     // Get refs from server
     let refs = get_remote_refs(remote_path, Some(REMOTE_REFS_BASE));
+
+    // Fetch missing objects by iterating and fetching on demand
+    for oid in base::get_objects_in_commits(
+        refs.values()
+            .into_iter()
+            .filter_map(|v| v.as_deref())
+            .collect(),
+    ) {
+        data::fetch_objects_if_missing(remote_path, &oid);
+    }
 
     // Update local refs to match server
     for (remote_name, value) in refs {

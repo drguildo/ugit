@@ -447,6 +447,38 @@ pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
     oids
 }
 
+fn get_objects_in_tree(oid: &str) -> HashSet<String> {
+    let mut visited: HashSet<String> = HashSet::new();
+
+    visited.insert(oid.to_owned());
+
+    for (object_type, oid, _) in get_tree_entries(Some(oid)) {
+        if !visited.contains(&oid) {
+            if object_type == "tree" {
+                let subtree_oids = get_objects_in_tree(&oid);
+                visited.union(&subtree_oids);
+            } else {
+                visited.insert(oid);
+            }
+        }
+    }
+
+    visited
+}
+
+pub fn get_objects_in_commits(oids: Vec<&str>) -> HashSet<String> {
+    let mut oids_in_commits: HashSet<String> = HashSet::new();
+    for oid in get_commits_and_parents(oids) {
+        let commit = get_commit(&oid);
+        oids_in_commits.insert(oid.clone());
+        if !oids_in_commits.contains(&commit.tree) {
+            let oids_in_tree = get_objects_in_tree(&commit.tree);
+            oids_in_commits.union(&oids_in_tree);
+        }
+    }
+    oids_in_commits
+}
+
 /// Whether the specified path is a ugit repository. This is overly simplistic and should really
 /// check whether the .ugit directory at least contains an objects sub-directory.
 pub fn is_ugit_repository(path: &Path) -> bool {

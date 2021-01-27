@@ -175,3 +175,25 @@ fn get_object_path(oid: &str) -> PathBuf {
     path.push(oid);
     path
 }
+
+fn object_exists(oid: &str) -> bool {
+    Path::new(&format!("{}/objects/{}", DEFAULT_REPO, oid)).exists()
+}
+
+pub fn fetch_objects_if_missing(remote_path: &Path, oid: &str) {
+    if object_exists(oid) {
+        return;
+    }
+
+    let mut from = remote_path.to_path_buf();
+    from.push(DEFAULT_REPO);
+    from.push("objects");
+    from.push(oid);
+
+    let mut to = PathBuf::new();
+    to.push(DEFAULT_REPO);
+    to.push("objects");
+    to.push(oid);
+
+    fs::copy(from, to).expect(&format!("Failed to copy remote object with OID {}", oid));
+}
