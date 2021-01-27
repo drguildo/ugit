@@ -6,10 +6,10 @@ const REMOTE_REFS_BASE: &str = "refs/heads/";
 const LOCAL_REFS_BASE: &str = "refs/remote/";
 
 pub fn fetch(remote_path: &Path) {
-    // Get refs from server
+    // Get refs from server.
     let refs = get_remote_refs(remote_path, Some(REMOTE_REFS_BASE));
 
-    // Fetch missing objects by iterating and fetching on demand
+    // Fetch missing objects by iterating and fetching on demand.
     for oid in base::get_objects_in_commits(
         refs.values()
             .into_iter()
@@ -19,7 +19,7 @@ pub fn fetch(remote_path: &Path) {
         data::fetch_objects_if_missing(remote_path, &oid);
     }
 
-    // Update local refs to match server
+    // Update local refs to match server.
     for (remote_name, value) in refs {
         let mut refname = String::from(LOCAL_REFS_BASE);
         refname.push_str(&remote_name.replacen(REMOTE_REFS_BASE, "", 1));
