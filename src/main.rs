@@ -104,6 +104,8 @@ fn main() {
     // with an error if the current working directory isn't one.
     exit_if_not_repository();
 
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
     if let Some(matches) = matches.subcommand_matches("hash-object") {
         let filename = matches.value_of("filename").unwrap();
         let contents = fs::read(filename).expect("Failed to read file contents");
@@ -119,7 +121,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
         if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
-            let contents = data::get_object(&oid, None);
+            let contents = data::get_object(default_repo, &oid, None);
             io::stdout()
                 .write_all(&contents)
                 .expect("Failed to output file data");
@@ -135,7 +137,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("read-tree") {
         if let Some(tree_oid) = base::get_oid(matches.value_of("tree_oid").unwrap()) {
-            base::read_tree(&tree_oid);
+            base::read_tree(default_repo, &tree_oid);
         }
         process::exit(0);
     }
@@ -240,7 +242,10 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("fetch") {
         let remote = matches.value_of("remote").unwrap();
-        ugit::remote::fetch(&PathBuf::from(remote));
+
+        let mut remote_path = PathBuf::from(remote);
+        remote_path.push(DEFAULT_REPO);
+        ugit::remote::fetch(&remote_path);
     }
 }
 
@@ -256,6 +261,8 @@ fn print_commit(oid: &str, commit: &ugit::Commit, refs: Option<&Vec<String>>) {
 /// Beginning at the commit with the specified OID, print the commit message and repeatedly do the
 /// same for the parent commit, if it exists.
 fn log(oid: &str) {
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
     let mut oid_to_ref: std::collections::HashMap<String, Vec<String>> =
         std::collections::HashMap::new();
 
@@ -266,27 +273,29 @@ fn log(oid: &str) {
         }
     }
 
-    for oid in base::get_commits_and_parents(vec![oid]) {
-        let commit = base::get_commit(&oid);
+    for oid in base::get_commits_and_parents(default_repo, vec![oid]) {
+        let commit = base::get_commit(default_repo, &oid);
         let refs = oid_to_ref.get(&oid);
         print_commit(&oid, &commit, refs);
     }
 }
 
 fn show(oid: Option<&str>) {
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
     if let Some(oid) = oid {
-        let commit = base::get_commit(oid);
+        let commit = base::get_commit(default_repo, oid);
         print_commit(oid, &commit, None);
 
         let parent_tree = if let Some(parent_oid) = commit.parents.first() {
-            let parent_commit = base::get_commit(parent_oid);
+            let parent_commit = base::get_commit(default_repo, parent_oid);
             Some(parent_commit.tree)
         } else {
             None
         };
         let result = diff::diff_trees(
-            &base::get_tree(parent_tree.as_deref(), None),
-            &base::get_tree(Some(commit.tree.as_str()), None),
+            &base::get_tree(default_repo, parent_tree.as_deref(), None),
+            &base::get_tree(default_repo, Some(commit.tree.as_str()), None),
         );
         println!("{}", result)
     }
@@ -314,8 +323,12 @@ fn k() {
         }
     }
 
-    for oid in base::get_commits_and_parents(ref_oids.iter().map(String::as_str).collect()) {
-        let commit = base::get_commit(&oid);
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
+    for oid in
+        base::get_commits_and_parents(default_repo, ref_oids.iter().map(String::as_str).collect())
+    {
+        let commit = base::get_commit(default_repo, &oid);
         dot.push_str(
             format!(
                 "\"{}\" [shape=box style=filled label=\"{}\"]\n",
@@ -342,14 +355,17 @@ fn status() {
         println!("HEAD detached at {}", shorten_oid(head.as_str()));
     }
 
-    if let Some(merge_head) = data::get_ref("MERGE_HEAD", true).value {
+    if let Some(merge_head) = data::get_ref(&PathBuf::from(DEFAULT_REPO), "MERGE_HEAD", true).value
+    {
         println!("Merging with {}", shorten_oid(&merge_head));
     }
 
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
     println!("\nChanges to be committed:\n");
-    let head_tree = base::get_commit(&head).tree;
+    let head_tree = base::get_commit(default_repo, &head).tree;
     for (path, action) in diff::get_changed_files(
-        &base::get_tree(Some(&head_tree), None),
+        &base::get_tree(default_repo, Some(&head_tree), None),
         &base::get_working_tree(),
     ) {
         println!("{:>12}: {}", action, path.to_str().unwrap());
@@ -357,8 +373,10 @@ fn status() {
 }
 
 fn diff(commit: &str) {
-    let tree_commit = base::get_commit(commit);
-    let tree = base::get_tree(Some(&tree_commit.tree), None);
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
+    let tree_commit = base::get_commit(default_repo, commit);
+    let tree = base::get_tree(default_repo, Some(&tree_commit.tree), None);
     let working_tree = base::get_working_tree();
     let result = diff::diff_trees(&tree, &working_tree);
     println!("{}", result);

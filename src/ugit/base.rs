@@ -35,10 +35,10 @@ pub fn get_oid(mut name: &str) -> Option<String> {
     ];
 
     for reference in refs_to_try {
-        let ref_value = data::get_ref(&reference, false);
+        let ref_value = data::get_ref(&PathBuf::from(DEFAULT_REPO), &reference, false);
         if ref_value.value.is_some() {
             // Name is a ref.
-            return data::get_ref(&reference, true).value;
+            return data::get_ref(&PathBuf::from(DEFAULT_REPO), &reference, true).value;
         }
     }
 
@@ -65,17 +65,19 @@ pub fn reset(oid: &str) {
 
 /// Merge the trees referenced by the HEAD (ref) and `other` (OID) commits.
 pub fn merge(other: &str) {
-    let head = data::get_ref("HEAD", true)
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
+    let head = data::get_ref(default_repo, "HEAD", true)
         .value
         .expect("Failed to get HEAD OID");
 
     let merge_base = get_merge_base(other, &head).expect("Failed to get merge base");
 
-    let other_commit = get_commit(other);
+    let other_commit = get_commit(default_repo, other);
 
     // Handle fast-forward merge.
     if merge_base == head {
-        read_tree(&other_commit.tree);
+        read_tree(default_repo, &other_commit.tree);
         data::update_ref(
             "HEAD",
             &data::RefValue {
@@ -98,8 +100,8 @@ pub fn merge(other: &str) {
         true,
     );
 
-    let base_commit = get_commit(&merge_base);
-    let head_commit = get_commit(&head);
+    let base_commit = get_commit(default_repo, &merge_base);
+    let head_commit = get_commit(default_repo, &head);
 
     read_tree_merged(&base_commit.tree, &head_commit.tree, &other_commit.tree);
     println!("Merged in working tree\nPlease commit");
@@ -109,8 +111,10 @@ pub fn merge(other: &str) {
 pub fn get_merge_base(oid1: &str, oid2: &str) -> Option<String> {
     use std::iter::FromIterator;
 
-    let parents1 = HashSet::<String>::from_iter(get_commits_and_parents(vec![oid1]));
-    for oid in get_commits_and_parents(vec![oid2]) {
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
+    let parents1 = HashSet::<String>::from_iter(get_commits_and_parents(default_repo, vec![oid1]));
+    for oid in get_commits_and_parents(default_repo, vec![oid2]) {
         if parents1.contains(&oid) {
             return Some(oid);
         }
@@ -147,7 +151,7 @@ pub fn create_branch(name: &str, oid: &str) {
 }
 
 pub fn get_branch_name() -> Option<String> {
-    let head = data::get_ref("HEAD", false);
+    let head = data::get_ref(&PathBuf::from(DEFAULT_REPO), "HEAD", false);
     if !head.symbolic {
         return None;
     }
@@ -169,9 +173,13 @@ pub fn get_branch_names() -> Vec<String> {
 }
 
 fn is_branch(branch: &str) -> bool {
-    data::get_ref(format!("refs/heads/{}", branch).as_str(), true)
-        .value
-        .is_some()
+    data::get_ref(
+        &PathBuf::from(DEFAULT_REPO),
+        format!("refs/heads/{}", branch).as_str(),
+        true,
+    )
+    .value
+    .is_some()
 }
 
 /// Store the contents of the current directory to the object database, creates a commit object and
@@ -182,10 +190,11 @@ pub fn commit(message: &str) -> Option<String> {
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(head) = data::get_ref("HEAD", true).value {
+    if let Some(head) = data::get_ref(&PathBuf::from(DEFAULT_REPO), "HEAD", true).value {
         commit.push_str(format!("parent {}\n", head).as_str());
     }
-    if let Some(merge_head) = data::get_ref("MERGE_HEAD", true).value {
+    if let Some(merge_head) = data::get_ref(&PathBuf::from(DEFAULT_REPO), "MERGE_HEAD", true).value
+    {
         commit.push_str(format!("parent {}\n", merge_head).as_str());
         data::delete_ref("MERGE_HEAD", false);
     }
@@ -204,8 +213,8 @@ pub fn commit(message: &str) -> Option<String> {
     Some(commit_oid)
 }
 
-pub fn get_commit(oid: &str) -> Commit {
-    let commit_data = data::get_object(oid, Some("commit"));
+pub fn get_commit(repo_path: &Path, oid: &str) -> Commit {
+    let commit_data = data::get_object(repo_path, oid, Some("commit"));
     let commit = String::from_utf8(commit_data).expect("Commit contains invalid data");
     let mut commit_lines = commit.lines();
 
@@ -283,11 +292,11 @@ pub fn write_tree(path: &Path) -> Option<String> {
 
 /// Retrieves the tree with the specified OID from the object store and writes it to the current
 /// directory.
-pub fn read_tree(tree_oid: &str) {
+pub fn read_tree(repo_path: &Path, tree_oid: &str) {
     let current_dir = env::current_dir().expect("Failed to get current directory");
     empty_directory(&current_dir);
 
-    let tree = get_tree(Some(tree_oid), None);
+    let tree = get_tree(repo_path, Some(tree_oid), None);
     for (oid, path) in tree {
         let directories = Path::new(&path)
             .parent()
@@ -298,19 +307,20 @@ pub fn read_tree(tree_oid: &str) {
             std::fs::create_dir_all(directories).expect("Failed to create parent directories");
         }
 
-        let contents = data::get_object(oid.as_str(), None);
+        let contents = data::get_object(repo_path, oid.as_str(), None);
         std::fs::write(path, contents).expect("Failed to write file contents");
     }
 }
 
 fn read_tree_merged(base: &str, head: &str, other: &str) {
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
     let current_dir = env::current_dir().expect("Failed to get current directory");
 
     empty_directory(&current_dir);
 
-    let base_tree = get_tree(Some(base), None);
-    let head_tree = get_tree(Some(head), None);
-    let other_tree = get_tree(Some(other), None);
+    let base_tree = get_tree(default_repo, Some(base), None);
+    let head_tree = get_tree(default_repo, Some(head), None);
+    let other_tree = get_tree(default_repo, Some(other), None);
     for (path, blob) in diff::merge_trees(&base_tree, &head_tree, &other_tree) {
         let path = path::PathBuf::from(path);
         fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directory");
@@ -318,11 +328,11 @@ fn read_tree_merged(base: &str, head: &str, other: &str) {
     }
 }
 
-fn get_tree_entries(oid: Option<&str>) -> Vec<(String, String, String)> {
+fn get_tree_entries(repo_path: &Path, oid: Option<&str>) -> Vec<(String, String, String)> {
     let mut tree_entries = vec![];
 
     if let Some(oid) = oid {
-        let tree_object = data::get_object(oid, Some("tree"));
+        let tree_object = data::get_object(repo_path, oid, Some("tree"));
         let tree = std::str::from_utf8(&tree_object).expect("Tree is not valid UTF-8");
         for line in tree.lines() {
             let split: Vec<&str> = line.split_whitespace().collect();
@@ -349,12 +359,12 @@ fn get_tree_entries(oid: Option<&str>) -> Vec<(String, String, String)> {
 
 /// Recursively traverses the tree with the specified OID and returns a flattened list of file OIDs
 /// and their paths.
-pub fn get_tree(oid: Option<&str>, base_path: Option<&str>) -> Tree {
+pub fn get_tree(repo_path: &Path, oid: Option<&str>, base_path: Option<&str>) -> Tree {
     let base_path = base_path.unwrap_or("");
 
     let mut result: Tree = vec![];
 
-    for (object_type, oid, relative_path) in get_tree_entries(oid) {
+    for (object_type, oid, relative_path) in get_tree_entries(repo_path, oid) {
         let mut path = path::PathBuf::new();
         path.push(base_path);
         path.push(relative_path);
@@ -366,7 +376,7 @@ pub fn get_tree(oid: Option<&str>, base_path: Option<&str>) -> Tree {
                 result.push((oid.to_string(), path.into_os_string()));
             }
             "tree" => {
-                let subtree = get_tree(Some(&oid), path.to_str());
+                let subtree = get_tree(repo_path, Some(&oid), path.to_str());
                 for subtree_object in subtree {
                     result.push(subtree_object);
                 }
@@ -400,8 +410,8 @@ pub fn get_working_tree() -> Tree {
 
 pub fn checkout(name: &str) {
     let oid = get_oid(name).unwrap();
-    let commit = get_commit(&oid);
-    read_tree(&commit.tree);
+    let commit = get_commit(&PathBuf::from(DEFAULT_REPO), &oid);
+    read_tree(&PathBuf::from(DEFAULT_REPO), &commit.tree);
 
     let head = if is_branch(name) {
         data::RefValue {
@@ -419,7 +429,7 @@ pub fn checkout(name: &str) {
 
 /// Retrieve the OIDs of all the commits that are reachable from the commits with the specified
 /// OIDs.
-pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
+pub fn get_commits_and_parents(repo_path: &Path, root_oids: Vec<&str>) -> Vec<String> {
     let mut oids_to_visit: VecDeque<String> = VecDeque::new();
     let mut visited_oids: HashSet<String> = HashSet::new();
 
@@ -433,7 +443,7 @@ pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
             continue;
         }
 
-        let commit: Commit = get_commit(&oid);
+        let commit: Commit = get_commit(repo_path, &oid);
 
         visited_oids.insert(oid.clone());
 
@@ -447,15 +457,15 @@ pub fn get_commits_and_parents(root_oids: Vec<&str>) -> Vec<String> {
     oids
 }
 
-fn get_objects_in_tree(oid: &str) -> HashSet<String> {
+fn get_objects_in_tree(repo_path: &Path, oid: &str) -> HashSet<String> {
     let mut visited: HashSet<String> = HashSet::new();
 
     visited.insert(oid.to_owned());
 
-    for (object_type, oid, _) in get_tree_entries(Some(oid)) {
+    for (object_type, oid, _) in get_tree_entries(repo_path, Some(oid)) {
         if !visited.contains(&oid) {
             if object_type == "tree" {
-                let subtree_oids = get_objects_in_tree(&oid);
+                let subtree_oids = get_objects_in_tree(repo_path, &oid);
                 visited.union(&subtree_oids);
             } else {
                 visited.insert(oid);
@@ -466,14 +476,14 @@ fn get_objects_in_tree(oid: &str) -> HashSet<String> {
     visited
 }
 
-pub fn get_objects_in_commits(oids: Vec<&str>) -> HashSet<String> {
+pub fn get_objects_in_commits(repo_path: &Path, oids: Vec<&str>) -> HashSet<String> {
     let mut oids_in_commits: HashSet<String> = HashSet::new();
-    for oid in get_commits_and_parents(oids) {
-        let commit = get_commit(&oid);
+    for oid in get_commits_and_parents(repo_path, oids) {
+        let commit = get_commit(repo_path, &oid);
         oids_in_commits.insert(oid.clone());
         if !oids_in_commits.contains(&commit.tree) {
-            let oids_in_tree = get_objects_in_tree(&commit.tree);
-            oids_in_commits.union(&oids_in_tree);
+            let oids_in_tree = get_objects_in_tree(repo_path, &commit.tree);
+            oids_in_commits.extend(oids_in_tree.into_iter());
         }
     }
     oids_in_commits

@@ -25,7 +25,7 @@ pub fn hash_object(data: &[u8], object_type: &str) -> String {
     let oid = generate_oid(data);
 
     // Write the data to a file, using the OID as the filename.
-    let path: PathBuf = get_object_path(&oid);
+    let path: PathBuf = get_object_path(&PathBuf::from(DEFAULT_REPO), &oid);
     let mut file = fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -40,8 +40,8 @@ pub fn hash_object(data: &[u8], object_type: &str) -> String {
 }
 
 /// Retrieves the object with the specified OID from the object store.
-pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
-    let path: PathBuf = get_object_path(oid);
+pub fn get_object(repo_path: &Path, oid: &str, expected_type: Option<&str>) -> Vec<u8> {
+    let path: PathBuf = get_object_path(repo_path, oid);
     let contents = fs::read(path).expect("Failed to read file data");
 
     // Find the index of the null byte that separates the object type from the data.
@@ -63,7 +63,7 @@ pub fn get_object(oid: &str, expected_type: Option<&str>) -> Vec<u8> {
 
 /// Map the specified reference to the specified value.
 pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
-    let reference = get_ref_internal(reference, deref).0;
+    let reference = get_ref_internal(&PathBuf::from(DEFAULT_REPO), reference, deref).0;
 
     assert!(value.value.is_some());
     let new_ref_value = if value.symbolic {
@@ -80,13 +80,13 @@ pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
 }
 
 /// Retrieves the OID that the specified reference is mapped to.
-pub fn get_ref(reference: &str, deref: bool) -> RefValue {
-    let ref_value = get_ref_internal(reference, deref);
+pub fn get_ref(repo_path: &Path, reference: &str, deref: bool) -> RefValue {
+    let ref_value = get_ref_internal(repo_path, reference, deref);
     ref_value.1
 }
 
-fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
-    let mut ref_path = PathBuf::from(DEFAULT_REPO);
+fn get_ref_internal(repo_path: &Path, reference: &str, deref: bool) -> (String, RefValue) {
+    let mut ref_path = PathBuf::from(repo_path);
     ref_path.push(reference);
 
     let mut value: Option<String> = None;
@@ -101,14 +101,14 @@ fn get_ref_internal(reference: &str, deref: bool) -> (String, RefValue) {
     if symbolic {
         value = value.as_ref().map(|s| s.replacen("ref: ", "", 1));
         if deref {
-            return get_ref_internal(&value.unwrap(), true);
+            return get_ref_internal(repo_path, &value.unwrap(), true);
         }
     }
     return (reference, RefValue { symbolic, value });
 }
 
 pub fn delete_ref(reference: &str, deref: bool) {
-    let reference = get_ref_internal(reference, deref).0;
+    let reference = get_ref_internal(&PathBuf::from(DEFAULT_REPO), reference, deref).0;
     let mut ref_path = PathBuf::from(DEFAULT_REPO);
     ref_path.push(reference);
     fs::remove_file(ref_path).expect("Failed to delete ref");
@@ -129,7 +129,7 @@ pub fn get_refs(repo_path: &Path, prefix: Option<&str>, deref: bool) -> Vec<(Str
                 continue;
             }
         }
-        let ref_value = get_ref(&ref_name, deref);
+        let ref_value = get_ref(repo_path, &ref_name, deref);
         if ref_value.value.is_some() {
             // This is mainly to handle MERGE_HEAD which will only exist if we're in the middle of a
             // merge.
@@ -168,16 +168,18 @@ fn generate_oid(bytes: &[u8]) -> String {
 }
 
 /// Return the path to an object in the object database.
-fn get_object_path(oid: &str) -> PathBuf {
-    let mut path = PathBuf::new();
-    path.push(DEFAULT_REPO);
+fn get_object_path(repo_path: &Path, oid: &str) -> PathBuf {
+    let mut path = PathBuf::from(repo_path);
     path.push("objects");
     path.push(oid);
     path
 }
 
 fn object_exists(oid: &str) -> bool {
-    Path::new(&format!("{}/objects/{}", DEFAULT_REPO, oid)).exists()
+    let mut object_path = PathBuf::from(DEFAULT_REPO);
+    object_path.push("objects");
+    object_path.push(oid);
+    object_path.exists()
 }
 
 pub fn fetch_objects_if_missing(remote_path: &Path, oid: &str) {
@@ -186,7 +188,6 @@ pub fn fetch_objects_if_missing(remote_path: &Path, oid: &str) {
     }
 
     let mut from = remote_path.to_path_buf();
-    from.push(DEFAULT_REPO);
     from.push("objects");
     from.push(oid);
 

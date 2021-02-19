@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::Path};
 
-use super::{base, data, DEFAULT_REPO};
+use super::{base, data};
 
 const REMOTE_REFS_BASE: &str = "refs/heads/";
 const LOCAL_REFS_BASE: &str = "refs/remote/";
@@ -8,14 +8,14 @@ const LOCAL_REFS_BASE: &str = "refs/remote/";
 pub fn fetch(remote_path: &Path) {
     // Get refs from server.
     let refs = get_remote_refs(remote_path, Some(REMOTE_REFS_BASE));
+    let commit_oids = refs
+        .values()
+        .into_iter()
+        .filter_map(|v| v.as_deref())
+        .collect();
 
     // Fetch missing objects by iterating and fetching on demand.
-    for oid in base::get_objects_in_commits(
-        refs.values()
-            .into_iter()
-            .filter_map(|v| v.as_deref())
-            .collect(),
-    ) {
+    for oid in base::get_objects_in_commits(remote_path, commit_oids) {
         data::fetch_objects_if_missing(remote_path, &oid);
     }
 
@@ -35,11 +35,8 @@ pub fn fetch(remote_path: &Path) {
 }
 
 fn get_remote_refs(remote_path: &Path, prefix: Option<&str>) -> HashMap<String, Option<String>> {
-    let mut remote_object_store = remote_path.to_path_buf();
-    remote_object_store.push(DEFAULT_REPO);
-
     let mut result = HashMap::new();
-    for (refname, reference) in data::get_refs(&remote_object_store, prefix, true) {
+    for (refname, reference) in data::get_refs(remote_path, prefix, true) {
         result.insert(refname, reference.value);
     }
     result

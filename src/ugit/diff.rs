@@ -1,23 +1,23 @@
-use std::io::Write;
 use std::process::Command;
 use std::{collections::HashMap, ffi::OsString};
+use std::{io::Write, path::PathBuf};
 
 use tempfile::NamedTempFile;
 
-use super::{data, Tree};
+use super::{data, Tree, DEFAULT_REPO};
 
 fn diff_blobs(o_from: Option<&str>, o_to: Option<&str>, path: &str) -> String {
     let mut f_from = NamedTempFile::new().expect("Failed to create temp file");
     let mut f_to = NamedTempFile::new().expect("Failed to create temp file");
 
     if let Some(o_from) = o_from {
-        let data = data::get_object(o_from, Some("blob"));
+        let data = data::get_object(&PathBuf::from(DEFAULT_REPO), o_from, Some("blob"));
         let s = std::str::from_utf8(&data).expect("Failed to convert data to string");
         write!(f_from, "{}", s).expect("Failed to write to temp file");
     }
 
     if let Some(o_to) = o_to {
-        let data = data::get_object(o_to, Some("blob"));
+        let data = data::get_object(&PathBuf::from(DEFAULT_REPO), o_to, Some("blob"));
         let s = std::str::from_utf8(&data).expect("Failed to convert data to string");
         write!(f_to, "{}", s).expect("Failed to write to temp file");
     }
@@ -118,16 +118,27 @@ fn merge_blobs(o_base: Option<&str>, o_head: Option<&str>, o_other: Option<&str>
     let f_other = NamedTempFile::new().expect("Failed to create temp file");
 
     if let Some(oid) = o_base {
-        std::fs::write(&f_base, data::get_object(oid, Some("blob"))).expect("Failed to write blob");
+        std::fs::write(
+            &f_base,
+            data::get_object(&PathBuf::from(DEFAULT_REPO), oid, Some("blob")),
+        )
+        .expect("Failed to write blob");
     }
 
     if let Some(oid) = o_head {
-        std::fs::write(&f_head, data::get_object(oid, Some("blob"))).expect("Failed to write blob");
+        std::fs::write(
+            &f_head,
+            data::get_object(&PathBuf::from(DEFAULT_REPO), oid, Some("blob")),
+        )
+        .expect("Failed to write blob");
     }
 
     if let Some(oid) = o_other {
-        std::fs::write(&f_other, data::get_object(oid, Some("blob")))
-            .expect("Failed to write blob");
+        std::fs::write(
+            &f_other,
+            data::get_object(&PathBuf::from(DEFAULT_REPO), oid, Some("blob")),
+        )
+        .expect("Failed to write blob");
     }
 
     let mut diff_command = Command::new("diff3");
