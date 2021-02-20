@@ -182,7 +182,7 @@ fn object_exists(oid: &str) -> bool {
     object_path.exists()
 }
 
-pub fn fetch_objects_if_missing(remote_path: &Path, oid: &str) {
+pub fn fetch_object_if_missing(remote_path: &Path, oid: &str) {
     if object_exists(oid) {
         return;
     }

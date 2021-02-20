@@ -16,7 +16,7 @@ pub fn fetch(remote_path: &Path) {
 
     // Fetch missing objects by iterating and fetching on demand.
     for oid in base::get_objects_in_commits(remote_path, commit_oids) {
-        data::fetch_objects_if_missing(remote_path, &oid);
+        data::fetch_object_if_missing(remote_path, &oid);
     }
 
     // Update local refs to match server.
