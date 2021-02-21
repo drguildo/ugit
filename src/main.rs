@@ -238,6 +238,8 @@ fn main() {
         let common_ancestor = base::get_merge_base(&commit1, &commit2);
 
         println!("{}", common_ancestor.unwrap_or_else(|| "none".to_owned()));
+
+        process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("fetch") {
@@ -246,6 +248,8 @@ fn main() {
         let mut remote_path = PathBuf::from(remote);
         remote_path.push(DEFAULT_REPO);
         ugit::remote::fetch(&remote_path);
+
+        process::exit(0);
     }
 }
 
