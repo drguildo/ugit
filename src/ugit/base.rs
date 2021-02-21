@@ -483,7 +483,7 @@ pub fn get_objects_in_commits(repo_path: &Path, oids: Vec<&str>) -> HashSet<Stri
         oids_in_commits.insert(oid.clone());
         if !oids_in_commits.contains(&commit.tree) {
             let oids_in_tree = get_objects_in_tree(repo_path, &commit.tree);
-            oids_in_commits.extend(oids_in_tree.into_iter());
+            oids_in_commits.extend(oids_in_tree);
         }
     }
     oids_in_commits
