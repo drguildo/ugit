@@ -175,15 +175,14 @@ fn get_object_path(repo_path: &Path, oid: &str) -> PathBuf {
     path
 }
 
-fn object_exists(oid: &str) -> bool {
-    let mut object_path = PathBuf::from(DEFAULT_REPO);
-    object_path.push("objects");
-    object_path.push(oid);
-    object_path.exists()
-}
-
 pub fn fetch_object_if_missing(remote_path: &Path, oid: &str) {
-    if object_exists(oid) {
+    let mut to = PathBuf::new();
+    to.push(DEFAULT_REPO);
+    to.push("objects");
+    to.push(oid);
+
+    if to.exists() {
+        // Object already exists so don't copy.
         return;
     }
 
@@ -191,22 +190,22 @@ pub fn fetch_object_if_missing(remote_path: &Path, oid: &str) {
     from.push("objects");
     from.push(oid);
 
-    let mut to = PathBuf::new();
-    to.push(DEFAULT_REPO);
-    to.push("objects");
-    to.push(oid);
-
     fs::copy(from, to).expect(&format!("Failed to copy remote object with OID {}", oid));
 }
 
 pub fn push_object(remote_path: &Path, oid: &str) {
-    let mut local_object_path = PathBuf::from(DEFAULT_REPO);
-    local_object_path.push("objects");
-    local_object_path.push(oid);
-
     let mut remote_object_path = PathBuf::from(remote_path);
     remote_object_path.push("objects");
     remote_object_path.push(oid);
+
+    if remote_object_path.exists() {
+        // Object already exists so don't copy.
+        return;
+    }
+
+    let mut local_object_path = PathBuf::from(DEFAULT_REPO);
+    local_object_path.push("objects");
+    local_object_path.push(oid);
 
     fs::copy(local_object_path, remote_object_path)
         .expect(&format!("Failed to copy local object with OID {}", oid));
