@@ -92,6 +92,11 @@ fn main() {
                 .arg(Arg::with_name("commit2").required(true)),
         )
         .subcommand(SubCommand::with_name("fetch").arg(Arg::with_name("remote").required(true)))
+        .subcommand(
+            SubCommand::with_name("push")
+                .arg(Arg::with_name("remote").required(true))
+                .arg(Arg::with_name("branch").required(true)),
+        )
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -248,6 +253,18 @@ fn main() {
         let mut remote_path = PathBuf::from(remote);
         remote_path.push(DEFAULT_REPO);
         ugit::remote::fetch(&remote_path);
+
+        process::exit(0);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("push") {
+        let remote = matches.value_of("remote").unwrap();
+        let branch = matches.value_of("branch").unwrap();
+
+        let mut remote_path = PathBuf::from(remote);
+        remote_path.push(DEFAULT_REPO);
+
+        ugit::remote::push(&remote_path, branch);
 
         process::exit(0);
     }

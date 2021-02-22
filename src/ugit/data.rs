@@ -62,8 +62,8 @@ pub fn get_object(repo_path: &Path, oid: &str, expected_type: Option<&str>) -> V
 }
 
 /// Map the specified reference to the specified value.
-pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
-    let reference = get_ref_internal(&PathBuf::from(DEFAULT_REPO), reference, deref).0;
+pub fn update_ref(repo_path: &Path, reference: &str, value: &RefValue, deref: bool) {
+    let reference = get_ref_internal(repo_path, reference, deref).0;
 
     assert!(value.value.is_some());
     let new_ref_value = if value.symbolic {
@@ -72,11 +72,11 @@ pub fn update_ref(reference: &str, value: &RefValue, deref: bool) {
         value.value.to_owned().unwrap()
     };
 
-    let mut path = PathBuf::from(DEFAULT_REPO);
-    path.push(reference);
-    fs::create_dir_all(path.parent().unwrap())
+    let mut ref_path = PathBuf::from(repo_path);
+    ref_path.push(reference);
+    fs::create_dir_all(ref_path.parent().unwrap())
         .expect("Failed to create reference directory structure");
-    fs::write(path, new_ref_value).expect("Failed to update reference");
+    fs::write(ref_path, new_ref_value).expect("Failed to update reference");
 }
 
 /// Retrieves the OID that the specified reference is mapped to.
@@ -197,4 +197,17 @@ pub fn fetch_object_if_missing(remote_path: &Path, oid: &str) {
     to.push(oid);
 
     fs::copy(from, to).expect(&format!("Failed to copy remote object with OID {}", oid));
+}
+
+pub fn push_object(remote_path: &Path, oid: &str) {
+    let mut local_object_path = PathBuf::from(DEFAULT_REPO);
+    local_object_path.push("objects");
+    local_object_path.push(oid);
+
+    let mut remote_object_path = PathBuf::from(remote_path);
+    remote_object_path.push("objects");
+    remote_object_path.push(oid);
+
+    fs::copy(local_object_path, remote_object_path)
+        .expect(&format!("Failed to copy local object with OID {}", oid));
 }

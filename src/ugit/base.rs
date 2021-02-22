@@ -13,6 +13,7 @@ use super::{data, diff, Commit, Tree, DEFAULT_REPO};
 pub fn init() {
     data::init();
     data::update_ref(
+        &PathBuf::from(DEFAULT_REPO),
         "HEAD",
         &data::RefValue {
             symbolic: true,
@@ -54,6 +55,7 @@ pub fn get_oid(mut name: &str) -> Option<String> {
 /// Set HEAD to the specified OID. This differs from checkout in that it follows symbolic refs.
 pub fn reset(oid: &str) {
     data::update_ref(
+        &PathBuf::from(DEFAULT_REPO),
         "HEAD",
         &data::RefValue {
             symbolic: false,
@@ -79,6 +81,7 @@ pub fn merge(other: &str) {
     if merge_base == head {
         read_tree(default_repo, &other_commit.tree);
         data::update_ref(
+            default_repo,
             "HEAD",
             &data::RefValue {
                 symbolic: false,
@@ -92,6 +95,7 @@ pub fn merge(other: &str) {
 
     // Create a MERGE_HEAD ref for use when setting the parent commits of the merge commit.
     data::update_ref(
+        default_repo,
         "MERGE_HEAD",
         &data::RefValue {
             symbolic: false,
@@ -129,6 +133,7 @@ pub fn get_merge_base(oid1: &str, oid2: &str) -> Option<String> {
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
     data::update_ref(
+        &PathBuf::from(DEFAULT_REPO),
         &ref_path,
         &data::RefValue {
             symbolic: false,
@@ -141,6 +146,7 @@ pub fn create_tag(name: &str, oid: &str) {
 pub fn create_branch(name: &str, oid: &str) {
     let ref_path = format!("refs/heads/{}", name);
     data::update_ref(
+        &PathBuf::from(DEFAULT_REPO),
         &ref_path,
         &data::RefValue {
             symbolic: false,
@@ -185,16 +191,17 @@ fn is_branch(branch: &str) -> bool {
 /// Store the contents of the current directory to the object database, creates a commit object and
 /// updates the HEAD.
 pub fn commit(message: &str) -> Option<String> {
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
     let current_dir = std::env::current_dir().expect("Failed to get current directory");
     let tree_oid = write_tree(&current_dir).expect("Failed to write tree");
 
     let mut commit = String::new();
     commit.push_str(format!("tree {}\n", tree_oid).as_str());
-    if let Some(head) = data::get_ref(&PathBuf::from(DEFAULT_REPO), "HEAD", true).value {
+    if let Some(head) = data::get_ref(default_repo, "HEAD", true).value {
         commit.push_str(format!("parent {}\n", head).as_str());
     }
-    if let Some(merge_head) = data::get_ref(&PathBuf::from(DEFAULT_REPO), "MERGE_HEAD", true).value
-    {
+    if let Some(merge_head) = data::get_ref(default_repo, "MERGE_HEAD", true).value {
         commit.push_str(format!("parent {}\n", merge_head).as_str());
         data::delete_ref("MERGE_HEAD", false);
     }
@@ -203,6 +210,7 @@ pub fn commit(message: &str) -> Option<String> {
 
     let commit_oid = data::hash_object(&commit.as_bytes().to_vec(), "commit");
     data::update_ref(
+        default_repo,
         "HEAD",
         &data::RefValue {
             symbolic: false,
@@ -409,9 +417,11 @@ pub fn get_working_tree() -> Tree {
 }
 
 pub fn checkout(name: &str) {
+    let default_repo = &PathBuf::from(DEFAULT_REPO);
+
     let oid = get_oid(name).unwrap();
-    let commit = get_commit(&PathBuf::from(DEFAULT_REPO), &oid);
-    read_tree(&PathBuf::from(DEFAULT_REPO), &commit.tree);
+    let commit = get_commit(default_repo, &oid);
+    read_tree(default_repo, &commit.tree);
 
     let head = if is_branch(name) {
         data::RefValue {
@@ -424,7 +434,7 @@ pub fn checkout(name: &str) {
             value: Some(oid),
         }
     };
-    data::update_ref("HEAD", &head, false);
+    data::update_ref(default_repo, "HEAD", &head, false);
 }
 
 /// Retrieve the OIDs of all the commits that are reachable from the commits with the specified
