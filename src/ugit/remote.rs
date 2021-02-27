@@ -43,9 +43,19 @@ pub fn push(remote_path: &Path, ref_name: &str) {
 
     // Get refs data.
     let remote_refs = get_remote_refs(remote_path, None);
+    let remote_ref = remote_refs
+        .get(ref_name)
+        .expect("Ref doesn't exist in remote repo");
     let local_ref = data::get_ref(default_repo, ref_name, true)
         .value
         .expect("Ref has no OID");
+
+    // Don't allow force push.
+    assert!(
+        remote_ref.is_none()
+            || base::is_ancestor_of(default_repo, &local_ref, &remote_ref.clone().unwrap()),
+        "Push would overwrite remote commits"
+    );
 
     // Compute which objects the server doesn't have.
     let known_remote_refs: Vec<&str> = remote_refs

@@ -130,6 +130,10 @@ pub fn get_merge_base(oid1: &str, oid2: &str) -> Option<String> {
     None
 }
 
+pub fn is_ancestor_of(repo_path: &Path, commit: &str, maybe_ancestor: &str) -> bool {
+    return get_commits_and_parents(repo_path, vec![commit]).contains(&maybe_ancestor.to_owned());
+}
+
 pub fn create_tag(name: &str, oid: &str) {
     let ref_path = format!("refs/tags/{}", name);
     data::update_ref(
