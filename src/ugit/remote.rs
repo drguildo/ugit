@@ -39,14 +39,24 @@ pub fn fetch(remote_path: &Path) {
 }
 
 pub fn push(remote_path: &Path, ref_name: &str) {
-    // Get refs data.
     let default_repo = &PathBuf::from(DEFAULT_REPO);
 
+    // Get refs data.
+    let remote_refs = get_remote_refs(remote_path, None);
     let local_ref = data::get_ref(default_repo, ref_name, true)
         .value
         .expect("Ref has no OID");
 
-    let objects_to_push = base::get_objects_in_commits(default_repo, vec![&local_ref]);
+    // Compute which objects the server doesn't have.
+    let known_remote_refs: Vec<&str> = remote_refs
+        .values()
+        .flatten()
+        .filter(|oid| data::object_exists(default_repo, oid))
+        .map(AsRef::as_ref)
+        .collect();
+    let remote_objects = base::get_objects_in_commits(remote_path, known_remote_refs);
+    let local_objects = base::get_objects_in_commits(default_repo, vec![&local_ref]);
+    let objects_to_push = local_objects.difference(&remote_objects);
 
     // Push all objects.
     for oid in objects_to_push {

@@ -210,3 +210,11 @@ pub fn push_object(remote_path: &Path, oid: &str) {
     fs::copy(local_object_path, remote_object_path)
         .expect(&format!("Failed to copy local object with OID {}", oid));
 }
+
+pub fn object_exists(repo_path: &Path, oid: &str) -> bool {
+    let mut object_path = PathBuf::from(repo_path);
+    object_path.push("objects");
+    object_path.push(oid);
+
+    return object_path.is_file();
+}
