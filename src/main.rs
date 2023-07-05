@@ -6,7 +6,7 @@ use std::{
     process,
 };
 
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, Command};
 
 mod ugit;
 use ugit::{base, data, diff, DEFAULT_REPO};
@@ -26,78 +26,75 @@ fn main() {
     const ABOUT_BRANCH: &str = "List the available branches, or create a new one";
     const ABOUT_STATUS: &str = "Print the currently checked out branch";
 
-    let matches = App::new(clap::crate_name!())
+    let matches = Command::new(clap::crate_name!())
         .about(clap::crate_description!())
         .author(clap::crate_authors!())
         .version(clap::crate_version!())
-        .subcommand(SubCommand::with_name("init").about(ABOUT_INIT))
+        .subcommand(Command::new("init").about(ABOUT_INIT))
         .subcommand(
-            SubCommand::with_name("hash-object")
+            Command::new("hash-object")
                 .about(ABOUT_HASH_OBJECT)
-                .arg(Arg::with_name("filename").required(true)),
+                .arg(Arg::new("filename").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("cat-file")
+            Command::new("cat-file")
                 .about(ABOUT_CAT_FILE)
-                .arg(Arg::with_name("oid").required(true)),
+                .arg(Arg::new("oid").required(true)),
         )
-        .subcommand(SubCommand::with_name("write-tree").about(ABOUT_WRITE_TREE))
+        .subcommand(Command::new("write-tree").about(ABOUT_WRITE_TREE))
         .subcommand(
-            SubCommand::with_name("read-tree")
+            Command::new("read-tree")
                 .about(ABOUT_READ_TREE)
-                .arg(Arg::with_name("tree_oid").required(true)),
+                .arg(Arg::new("tree_oid").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("commit").about(ABOUT_COMMIT).arg(
-                Arg::with_name("message")
-                    .short("m")
+            Command::new("commit").about(ABOUT_COMMIT).arg(
+                Arg::new("message")
+                    .short('m')
                     .long("message")
-                    .takes_value(true)
                     .required(true),
             ),
         )
         .subcommand(
-            SubCommand::with_name("log")
+            Command::new("log")
                 .about(ABOUT_LOG)
-                .arg(Arg::with_name("commit_oid").default_value("@")),
+                .arg(Arg::new("commit_oid").default_value("@")),
         )
+        .subcommand(Command::new("show").arg(Arg::new("commit_oid").default_value("@")))
         .subcommand(
-            SubCommand::with_name("show").arg(Arg::with_name("commit_oid").default_value("@")),
-        )
-        .subcommand(
-            SubCommand::with_name("checkout")
+            Command::new("checkout")
                 .about(ABOUT_CHECKOUT)
-                .arg(Arg::with_name("commit").required(true)),
+                .arg(Arg::new("commit").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("tag")
+            Command::new("tag")
                 .about(ABOUT_TAG)
-                .arg(Arg::with_name("name").required(true))
-                .arg(Arg::with_name("oid").default_value("@")),
+                .arg(Arg::new("name").required(true))
+                .arg(Arg::new("oid").default_value("@")),
         )
-        .subcommand(SubCommand::with_name("k"))
+        .subcommand(Command::new("k"))
         .subcommand(
-            SubCommand::with_name("branch")
+            Command::new("branch")
                 .about(ABOUT_BRANCH)
-                .arg(Arg::with_name("name"))
-                .arg(Arg::with_name("start_point").default_value("@")),
+                .arg(Arg::new("name"))
+                .arg(Arg::new("start_point").default_value("@")),
         )
-        .subcommand(SubCommand::with_name("status").about(ABOUT_STATUS))
-        .subcommand(SubCommand::with_name("reset").arg(Arg::with_name("oid").required(true)))
-        .subcommand(SubCommand::with_name("diff").arg(Arg::with_name("commit").default_value("@")))
-        .subcommand(SubCommand::with_name("merge").arg(Arg::with_name("commit").default_value("@")))
+        .subcommand(Command::new("status").about(ABOUT_STATUS))
+        .subcommand(Command::new("reset").arg(Arg::new("oid").required(true)))
+        .subcommand(Command::new("diff").arg(Arg::new("commit").default_value("@")))
+        .subcommand(Command::new("merge").arg(Arg::new("commit").default_value("@")))
         .subcommand(
-            SubCommand::with_name("merge-base")
-                .arg(Arg::with_name("commit1").required(true))
-                .arg(Arg::with_name("commit2").required(true)),
+            Command::new("merge-base")
+                .arg(Arg::new("commit1").required(true))
+                .arg(Arg::new("commit2").required(true)),
         )
-        .subcommand(SubCommand::with_name("fetch").arg(Arg::with_name("remote").required(true)))
+        .subcommand(Command::new("fetch").arg(Arg::new("remote").required(true)))
         .subcommand(
-            SubCommand::with_name("push")
-                .arg(Arg::with_name("remote").required(true))
-                .arg(Arg::with_name("branch").required(true)),
+            Command::new("push")
+                .arg(Arg::new("remote").required(true))
+                .arg(Arg::new("branch").required(true)),
         )
-        .setting(clap::AppSettings::ArgRequiredElseHelp)
+        .arg_required_else_help(true)
         .get_matches();
 
     if matches.subcommand_matches("init").is_some() {
@@ -112,7 +109,7 @@ fn main() {
     let default_repo = &PathBuf::from(DEFAULT_REPO);
 
     if let Some(matches) = matches.subcommand_matches("hash-object") {
-        let filename = matches.value_of("filename").unwrap();
+        let filename = matches.get_one::<String>("filename").unwrap();
         let contents = fs::read(filename).expect("Failed to read file contents");
         let object_hash = data::hash_object(&contents, "blob");
         io::stdout()
@@ -125,7 +122,7 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("cat-file") {
-        if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
+        if let Some(oid) = base::get_oid(matches.get_one::<String>("oid").unwrap()) {
             let contents = data::get_object(default_repo, &oid, None);
             io::stdout()
                 .write_all(&contents)
@@ -141,40 +138,40 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("read-tree") {
-        if let Some(tree_oid) = base::get_oid(matches.value_of("tree_oid").unwrap()) {
+        if let Some(tree_oid) = base::get_oid(matches.get_one::<String>("tree_oid").unwrap()) {
             base::read_tree(default_repo, &tree_oid);
         }
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("commit") {
-        let message = matches.value_of("message").unwrap();
+        let message = matches.get_one::<String>("message").unwrap();
         base::commit(message);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("log") {
-        if let Some(commit_oid) = base::get_oid(matches.value_of("commit_oid").unwrap()) {
+        if let Some(commit_oid) = base::get_oid(matches.get_one::<String>("commit_oid").unwrap()) {
             log(&commit_oid);
         }
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("show") {
-        let oid = base::get_oid(matches.value_of("commit_oid").unwrap());
+        let oid = base::get_oid(matches.get_one::<String>("commit_oid").unwrap());
         show(oid.as_deref());
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("checkout") {
-        let commit = matches.value_of("commit").unwrap();
+        let commit = matches.get_one::<String>("commit").unwrap();
         base::checkout(&commit);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("tag") {
-        let name = matches.value_of("name").unwrap();
-        if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
+        let name = matches.get_one::<String>("name").unwrap();
+        if let Some(oid) = base::get_oid(matches.get_one::<String>("oid").unwrap()) {
             base::create_tag(name, &oid);
         }
         process::exit(0);
@@ -186,8 +183,10 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("branch") {
-        if let Some(name) = matches.value_of("name") {
-            if let Some(start_point) = base::get_oid(matches.value_of("start_point").unwrap()) {
+        if let Some(name) = matches.get_one::<String>("name") {
+            if let Some(start_point) =
+                base::get_oid(matches.get_one::<String>("start_point").unwrap())
+            {
                 base::create_branch(name, &start_point);
                 println!(
                     "Branch {} created at {}",
@@ -216,29 +215,31 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("reset") {
-        if let Some(oid) = base::get_oid(matches.value_of("oid").unwrap()) {
+        if let Some(oid) = base::get_oid(matches.get_one::<String>("oid").unwrap()) {
             base::reset(&oid);
         }
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("diff") {
-        let oid = base::get_oid(matches.value_of("commit").unwrap()).expect("Failed to get OID");
+        let oid =
+            base::get_oid(matches.get_one::<String>("commit").unwrap()).expect("Failed to get OID");
         diff(&oid);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("merge") {
-        let oid = base::get_oid(matches.value_of("commit").unwrap()).expect("Failed to get OID");
+        let oid =
+            base::get_oid(matches.get_one::<String>("commit").unwrap()).expect("Failed to get OID");
         merge(&oid);
         process::exit(0);
     }
 
     if let Some(matches) = matches.subcommand_matches("merge-base") {
-        let commit1 =
-            base::get_oid(matches.value_of("commit1").unwrap()).expect("Failed to get OID");
-        let commit2 =
-            base::get_oid(matches.value_of("commit2").unwrap()).expect("Failed to get OID");
+        let commit1 = base::get_oid(matches.get_one::<String>("commit1").unwrap())
+            .expect("Failed to get OID");
+        let commit2 = base::get_oid(matches.get_one::<String>("commit2").unwrap())
+            .expect("Failed to get OID");
 
         let common_ancestor = base::get_merge_base(&commit1, &commit2);
 
@@ -248,7 +249,7 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("fetch") {
-        let remote = matches.value_of("remote").unwrap();
+        let remote = matches.get_one::<String>("remote").unwrap();
 
         let mut remote_path = PathBuf::from(remote);
         remote_path.push(DEFAULT_REPO);
@@ -258,8 +259,8 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("push") {
-        let remote = matches.value_of("remote").unwrap();
-        let branch = matches.value_of("branch").unwrap();
+        let remote = matches.get_one::<String>("remote").unwrap();
+        let branch = matches.get_one::<String>("branch").unwrap();
 
         let mut remote_path = PathBuf::from(remote);
         remote_path.push(DEFAULT_REPO);
