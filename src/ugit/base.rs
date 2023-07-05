@@ -49,7 +49,7 @@ pub fn get_oid(mut name: &str) -> Option<String> {
         return Some(name.to_owned());
     }
 
-    panic!(format!("Unknown name {}", name));
+    panic!("Unknown name {}", name);
 }
 
 /// Set HEAD to the specified OID. This differs from checkout in that it follows symbolic refs.
@@ -393,7 +393,7 @@ pub fn get_tree(repo_path: &Path, oid: Option<&str>, base_path: Option<&str>) ->
                     result.push(subtree_object);
                 }
             }
-            _ => panic!(format!("Unrecognised object type: {}", object_type)),
+            _ => panic!("Unrecognised object type: {}", object_type),
         }
     }
 
