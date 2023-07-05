@@ -480,7 +480,7 @@ fn get_objects_in_tree(repo_path: &Path, oid: &str) -> HashSet<String> {
         if !visited.contains(&oid) {
             if object_type == "tree" {
                 let subtree_oids = get_objects_in_tree(repo_path, &oid);
-                visited.union(&subtree_oids);
+                visited.extend(subtree_oids);
             } else {
                 visited.insert(oid);
             }
