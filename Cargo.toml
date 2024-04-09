@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 clap = { version = "4", features = ["cargo"] }
-sha-1 = "0.9"
+sha-1 = "0.10"
 tempfile = "3"
 walkdir = "2"
